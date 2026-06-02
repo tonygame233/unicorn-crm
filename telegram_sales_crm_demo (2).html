@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Unicorn CRM" />
   <meta name="theme-color" content="#081018" />
   <link rel="manifest" href="/manifest.json" />
-  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icon.jpg" />
   <title>Unicorn CRM App</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -71,10 +71,34 @@
   </style>
 </head>
 <body>
+
+<!-- Splash Screen -->
+<div id="splashScreen" style="position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .6s ease">
+  <video id="splashVideo" autoplay muted playsinline webkit-playsinline style="width:100%;height:100%;object-fit:cover">
+    <source src="/splash.mp4" type="video/mp4">
+  </video>
+</div>
+<script>
+(function(){
+  const splash=document.getElementById('splashScreen');
+  const vid=document.getElementById('splashVideo');
+  function hideSplash(){
+    splash.style.opacity='0';
+    setTimeout(()=>{splash.style.display='none';},650);
+  }
+  vid.addEventListener('ended',hideSplash);
+  vid.addEventListener('error',hideSplash);
+  // Tối đa 6 giây dù video dài hơn
+  setTimeout(hideSplash,6000);
+  // Nếu video không load được → ẩn ngay
+  setTimeout(()=>{if(vid.readyState===0)hideSplash();},1500);
+})();
+</script>
+
 <div id="loginScreen" class="fixed inset-0 z-[9999] bg-[#081018] grid place-items-center p-6">
   <div class="w-full max-w-[440px] rounded-[32px] border line bg-[#0f1722] shadow-2xl shadow-black/50 overflow-hidden">
     <div class="p-7 border-b line">
-      <div class="w-14 h-14 rounded-2xl bg-yellow-400 text-black grid place-items-center font-black text-xl mb-5">U</div>
+      <img src="/icon.jpg" class="w-20 h-20 rounded-2xl object-cover mb-5" alt="Unicorn CRM" />
       <h1 class="text-3xl font-black text-white">Unicorn CRM</h1>
       <p class="text-[12px] text-zinc-500 mt-2">Đăng nhập để vào hệ thống Telegram Sales CRM</p>
     </div>
@@ -103,7 +127,7 @@
 
 <div id="appRoot" class="hidden h-screen grid grid-cols-[76px_1fr] bg-[#081018]">
   <aside class="glass border-r line flex flex-col items-center py-4 gap-3">
-    <div class="w-11 h-11 rounded-2xl bg-yellow-400 text-black grid place-items-center font-black text-base mb-3">U</div>
+    <img src="/icon.jpg" class="w-11 h-11 rounded-2xl object-cover mb-3" alt="U" />
     
     <button onclick="openModule('Inbox')" id="navInbox" class="module-btn active w-12 h-12 rounded-2xl grid place-items-center text-zinc-100" title="Inbox"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
     <button onclick="openModule('Contacts')" id="navContacts" class="module-btn w-12 h-12 rounded-2xl grid place-items-center text-zinc-400 hover:bg-white/5"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>

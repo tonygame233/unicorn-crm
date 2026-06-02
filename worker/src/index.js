@@ -40,7 +40,7 @@ app.get('/favicon.ico', (c) => new Response(ICON_SVG, { headers: { 'Content-Type
 app.get('/manifest.json', (c) => c.json({
   name:'Unicorn CRM', short_name:'Unicorn', start_url:'/', display:'standalone',
   background_color:'#081018', theme_color:'#facc15', orientation:'portrait-primary',
-  icons:[{src:'/icon-192.png',sizes:'192x192',type:'image/svg+xml',purpose:'any maskable'},{src:'/icon-512.png',sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]
+  icons:[{src:'/icon.jpg',sizes:'512x512',type:'image/jpeg',purpose:'any maskable'}]
 }));
 
 // Stub socket.io — trả về JS rỗng để tránh lỗi 404 HTML block trang
