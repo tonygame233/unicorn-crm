@@ -44,10 +44,24 @@
     .mob-nav-btn span{font-size:10px;font-weight:700}
     #toastBox{bottom:calc(56px + 12px)!important;right:12px!important}
     /* Broadcast mobile */
-    #screenBroadcast .h-full.grid{grid-template-columns:1fr!important}
+    #screenBroadcast .h-full.grid{grid-template-columns:1fr!important;display:flex!important;flex-direction:column!important}
     #screenBroadcast aside.glass.border-r{display:none!important}
     #broadcastPreviewPanel{display:none!important}
-    #screenBroadcast main{min-width:0}
+    #screenBroadcast main{min-width:0;display:flex!important;flex-direction:column!important}
+    #screenBroadcast main .h-\[72px\]{height:56px!important;padding:0 16px!important}
+    #screenBroadcast main .h-\[72px\] h3{font-size:15px!important}
+    #screenBroadcast main .h-\[72px\] p{display:none!important}
+    #screenBroadcast main .h-\[72px\] .flex.items-center.gap-3{gap:8px!important}
+    #screenBroadcast main .h-\[72px\] button{height:34px!important;padding:0 12px!important;font-size:12px!important}
+    #screenBroadcast main .flex-1{padding:12px!important}
+    #screenBroadcast main .grid.grid-cols-2{grid-template-columns:1fr!important;gap:12px!important}
+    #screenBroadcast main .rounded-3xl{border-radius:16px!important;padding:14px!important}
+    /* Channel pills on mobile: wrap compact */
+    #broadcastChannelGroup{grid-template-columns:repeat(3,1fr)!important;gap:6px!important}
+    #broadcastChannelGroup button,#broadcastLifecycleGroup button,#broadcastPackageGroup button{font-size:11px!important;padding:4px 8px!important;height:auto!important;min-height:30px!important}
+    #broadcastBody{height:120px!important}
+    /* Compact audience box */
+    #broadcastAudienceBox{padding:8px 12px!important;font-size:12px!important}
     /* Reports/Automation/Contacts mobile scroll */
     #screenReports,#screenAutomation,#screenContacts,#screenTracking,#screenSettings{overflow-y:auto!important}
     #mobileBottomNav{padding-bottom:env(safe-area-inset-bottom,0px)}
