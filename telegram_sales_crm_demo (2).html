@@ -948,9 +948,9 @@ function startPolling(){
         const lead=leads.find(l=>l.id===c.id);
         if(!lead){leads.unshift(contactToLead(c));refreshList=true}
         else if(c.last_message&&lead.msg!==c.last_message){
-          const isNew=c.unread>(lead.unread||0)&&activeLead?.id!==c.id;
+          const isNew=c.unread>(lead.unread||0)&&(activeLead?.id!==c.id||document.hidden);
           lead.msg=c.last_message;lead.time=formatRelativeTime(c.last_message_time);
-          lead.unread=activeLead?.id===c.id?0:c.unread;
+          lead.unread=(activeLead?.id===c.id&&!document.hidden)?0:c.unread;
           if(isNew)notifyNewMessage(lead.n,c.last_message,lead);
           refreshList=true;
         }
