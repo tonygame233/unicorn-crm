@@ -29,30 +29,27 @@
     #mobileBottomNav{display:flex!important;position:fixed;bottom:0;left:0;right:0;height:56px;background:#0f1722;border-top:1px solid rgba(255,255,255,.08);align-items:stretch;z-index:200}
     #inboxOuter{grid-template-columns:1fr!important}
     #inboxFolders{display:none!important}
-    #inboxShell{grid-template-columns:1fr!important;position:relative!important;overflow:hidden!important}
-    #inboxLeadList{position:absolute!important;inset:0!important;z-index:2!important;transform:translateX(0);transition:transform .28s cubic-bezier(.4,0,.2,1)}
-    #inboxChat{position:absolute!important;inset:0!important;z-index:3!important;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
-    body.mob-chat #inboxLeadList{transform:translateX(-25%)}
+    /* Ẩn channel tab header trong inbox */
+    #inboxOuter>main>.glass.border-b.line{height:0!important;overflow:hidden!important;border:none!important;min-height:0!important;padding:0!important}
+    #inboxOuter>main{grid-template-rows:0 minmax(0,1fr)!important}
+    /* Inbox shell: slide animation */
+    #inboxShell{grid-template-columns:1fr!important;position:relative!important;overflow:hidden!important;clip-path:inset(0)!important;-webkit-clip-path:inset(0)!important}
+    #inboxLeadList{position:absolute!important;inset:0!important;z-index:2!important;transform:translateX(0)!important;transition:transform .28s cubic-bezier(.4,0,.2,1)!important;will-change:transform}
+    #inboxChat{position:absolute!important;inset:0!important;z-index:3!important;transform:translateX(100%)!important;transition:transform .28s cubic-bezier(.4,0,.2,1)!important;will-change:transform;display:grid!important;grid-template-rows:84px minmax(0,1fr) auto!important}
+    body.mob-chat #inboxLeadList{transform:translateX(-100%)!important}
     body.mob-chat #inboxChat{transform:translateX(0)!important}
     #customerPanel{display:none!important}
     #mobBackBtn{display:flex!important}
     /* Chat area mobile */
     #chatBody{padding-left:12px!important;padding-right:12px!important;padding-top:12px!important}
     #chatBody .max-w-6xl{max-width:100%!important}
-    #chatBody .space-y-8{row-gap:10px!important}
     /* Bubble max-width trên mobile */
-    #chatBody .msg-wrap>div{max-width:86%!important}
-    /* Chat header compact on mobile */
-    #chatHeader{padding:0 12px!important;min-height:0!important}
-    #chatHeader .h-11{width:36px!important;height:36px!important}
-    #chatHeader .text-lg{font-size:14px!important}
-    #chatHeader .text-sm{font-size:11px!important}
+    #chatBody .msg-wrap>div{max-width:85%!important}
+    /* Chat header mobile */
+    #chatHeader{padding:0 12px!important}
     /* Reply composer mobile */
     #replyComposer{padding:8px 12px!important}
     #replyComposer .max-w-5xl{max-width:100%!important}
-    /* Ẩn channel header row trên màn inbox mobile */
-    #inboxOuter>main>.glass.border-b{display:none!important}
-    #inboxOuter>main{grid-template-rows:minmax(0,1fr)!important}
     .mob-hide{display:none!important}
     .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;color:#71717a;transition:color .15s}
     .mob-nav-btn.mob-active{color:#facc15}
