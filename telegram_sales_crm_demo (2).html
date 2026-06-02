@@ -23,32 +23,33 @@
   /* ─── MOBILE ───────────────────────────────────────── */
   #mobileBottomNav{display:none}
   @media(max-width:768px){
-    html,body{overflow:hidden}
-    #appRoot{grid-template-columns:1fr!important;height:calc(100dvh - 56px)!important}
+    html,body{overflow:hidden;height:100%}
+    /* App root: full height minus bottom nav */
+    #appRoot{display:flex!important;flex-direction:column!important;grid-template-columns:unset!important;height:calc(100dvh - 56px)!important;overflow:hidden!important}
     #appRoot>aside.glass{display:none!important}
-    #mobileBottomNav{display:flex!important;position:fixed;bottom:0;left:0;right:0;height:56px;background:#0f1722;border-top:1px solid rgba(255,255,255,.08);align-items:stretch;z-index:200}
-    #inboxOuter{grid-template-columns:1fr!important}
+    #mobileBottomNav{display:flex!important;position:fixed;bottom:0;left:0;right:0;height:56px;background:#0f1722;border-top:1px solid rgba(255,255,255,.08);align-items:stretch;z-index:200;padding-bottom:env(safe-area-inset-bottom,0px)}
+    /* Inbox screen: fill parent height */
+    #screenInbox{height:100%!important;overflow:hidden!important}
+    #inboxOuter{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;grid-template-columns:unset!important}
     #inboxFolders{display:none!important}
-    /* Ẩn channel tab header trong inbox */
-    #inboxOuter>main>.glass.border-b.line{height:0!important;overflow:hidden!important;border:none!important;min-height:0!important;padding:0!important}
-    #inboxOuter>main{grid-template-rows:0 minmax(0,1fr)!important}
-    /* Inbox shell: slide animation */
-    #inboxShell{grid-template-columns:1fr!important;position:relative!important;overflow:hidden!important;clip-path:inset(0)!important;-webkit-clip-path:inset(0)!important}
-    #inboxLeadList{position:absolute!important;inset:0!important;z-index:2!important;transform:translateX(0)!important;transition:transform .28s cubic-bezier(.4,0,.2,1)!important;will-change:transform}
-    #inboxChat{position:absolute!important;inset:0!important;z-index:3!important;transform:translateX(100%)!important;transition:transform .28s cubic-bezier(.4,0,.2,1)!important;will-change:transform;display:grid!important;grid-template-rows:84px minmax(0,1fr) auto!important}
+    /* Channel tab header: ẩn trên mobile */
+    #inboxOuter>main{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;overflow:hidden!important}
+    #inboxOuter>main>header{display:none!important}
+    /* InboxShell: relative container cho slide */
+    #inboxShell{flex:1!important;min-height:0!important;position:relative!important;overflow:hidden!important;display:block!important}
+    /* Lead list & chat: absolute fill */
+    #inboxLeadList{position:absolute!important;inset:0!important;z-index:2!important;transform:translateX(0)!important;transition:transform .25s ease!important;will-change:transform;overflow:hidden!important}
+    #inboxChat{position:absolute!important;inset:0!important;z-index:3!important;transform:translateX(100%)!important;transition:transform .25s ease!important;will-change:transform;display:flex!important;flex-direction:column!important;overflow:hidden!important}
     body.mob-chat #inboxLeadList{transform:translateX(-100%)!important}
     body.mob-chat #inboxChat{transform:translateX(0)!important}
     #customerPanel{display:none!important}
     #mobBackBtn{display:flex!important}
-    /* Chat area mobile */
-    #chatBody{padding-left:12px!important;padding-right:12px!important;padding-top:12px!important}
+    /* Chat layout trong #inboxChat (flex column) */
+    #chatHeader{flex-shrink:0!important;height:64px!important;padding:0 12px!important}
+    #chatBody{flex:1!important;min-height:0!important;overflow-y:auto!important;padding:12px!important}
     #chatBody .max-w-6xl{max-width:100%!important}
-    /* Bubble max-width trên mobile */
     #chatBody .msg-wrap>div{max-width:85%!important}
-    /* Chat header mobile */
-    #chatHeader{padding:0 12px!important}
-    /* Reply composer mobile */
-    #replyComposer{padding:8px 12px!important}
+    #replyComposer{flex-shrink:0!important;padding:8px 12px!important}
     #replyComposer .max-w-5xl{max-width:100%!important}
     .mob-hide{display:none!important}
     .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;color:#71717a;transition:color .15s}
