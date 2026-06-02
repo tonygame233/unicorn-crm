@@ -36,8 +36,23 @@
     body.mob-chat #inboxChat{transform:translateX(0)!important}
     #customerPanel{display:none!important}
     #mobBackBtn{display:flex!important}
-    #chatBody{padding-left:16px!important;padding-right:16px!important}
+    /* Chat area mobile */
+    #chatBody{padding-left:12px!important;padding-right:12px!important;padding-top:12px!important}
+    #chatBody .max-w-6xl{max-width:100%!important}
+    #chatBody .space-y-8{row-gap:10px!important}
+    /* Bubble max-width trên mobile */
+    #chatBody .msg-wrap>div{max-width:86%!important}
+    /* Chat header compact on mobile */
+    #chatHeader{padding:0 12px!important;min-height:0!important}
+    #chatHeader .h-11{width:36px!important;height:36px!important}
+    #chatHeader .text-lg{font-size:14px!important}
+    #chatHeader .text-sm{font-size:11px!important}
+    /* Reply composer mobile */
+    #replyComposer{padding:8px 12px!important}
     #replyComposer .max-w-5xl{max-width:100%!important}
+    /* Ẩn channel header row trên màn inbox mobile */
+    #inboxOuter>main>.glass.border-b{display:none!important}
+    #inboxOuter>main{grid-template-rows:minmax(0,1fr)!important}
     .mob-hide{display:none!important}
     .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;color:#71717a;transition:color .15s}
     .mob-nav-btn.mob-active{color:#facc15}
@@ -82,15 +97,16 @@
 (function(){
   const splash=document.getElementById('splashScreen');
   const vid=document.getElementById('splashVideo');
+  // Chỉ hiện trên mobile (điện thoại cài app PWA)
+  const isMob=window.innerWidth<=768||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if(!isMob){splash.style.display='none';return;}
   function hideSplash(){
     splash.style.opacity='0';
     setTimeout(()=>{splash.style.display='none';},650);
   }
   vid.addEventListener('ended',hideSplash);
   vid.addEventListener('error',hideSplash);
-  // Tối đa 6 giây dù video dài hơn
   setTimeout(hideSplash,6000);
-  // Nếu video không load được → ẩn ngay
   setTimeout(()=>{if(vid.readyState===0)hideSplash();},1500);
 })();
 </script>
@@ -451,6 +467,39 @@
   </div>
 </section>
   <section id="screenSettings" class="module-screen h-screen overflow-y-auto scrollbar p-8">
+
+  <!-- Card tải app -->
+  <div class="rounded-3xl border border-yellow-400/30 bg-yellow-400/5 p-6 mb-6">
+    <div class="flex items-center gap-4 mb-4">
+      <img src="/icon.jpg" class="w-14 h-14 rounded-2xl object-cover" />
+      <div>
+        <h3 class="text-xl font-black text-white">Tải App Unicorn CRM</h3>
+        <p class="text-sm text-zinc-400 mt-1">Cài lên điện thoại dùng như app thật</p>
+      </div>
+    </div>
+    <div id="pwaInstallAndroid" class="hidden mb-3">
+      <button onclick="triggerPwaInstall()" class="w-full h-12 rounded-2xl bg-yellow-400 text-black font-black flex items-center justify-center gap-3">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.34L13 10.8V3h-2v7.8l-4.523 4.54A5 5 0 0 0 7 17v1a5 5 0 0 0 5 5 5 5 0 0 0 5-5v-1a5 5 0 0 0-.477-1.66zM12 21a3 3 0 0 1-3-3v-.5l3-3 3 3V18a3 3 0 0 1-3 3z"/></svg>
+        Cài App (Android)
+      </button>
+    </div>
+    <div id="pwaInstallIOS" class="hidden mb-3">
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-4 text-sm text-zinc-300 space-y-2">
+        <p class="font-black text-white">Cài trên iPhone / iPad:</p>
+        <p>1. Mở trang này trong <b class="text-yellow-300">Safari</b></p>
+        <p>2. Bấm nút <b class="text-yellow-300">Chia sẻ</b> (⬆️) ở thanh dưới</p>
+        <p>3. Chọn <b class="text-yellow-300">"Thêm vào Màn hình chính"</b></p>
+      </div>
+    </div>
+    <div id="pwaInstallDesktop" class="hidden mb-3">
+      <button onclick="triggerPwaInstall()" class="w-full h-12 rounded-2xl bg-white/10 border border-white/15 text-white font-black flex items-center justify-center gap-3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Cài App (Desktop)
+      </button>
+    </div>
+    <p id="pwaInstallDone" class="hidden text-sm text-green-300 font-black text-center py-2">✓ App đã được cài đặt!</p>
+  </div>
+
   <div class="rounded-3xl border line bg-[#0c141d] p-8">
     <div class="flex items-center justify-between mb-8">
       <div>
@@ -1296,6 +1345,32 @@ async function subscribePush(reg){
   }catch(e){console.warn('Push subscribe failed:',e.message);}
 }
 
+// PWA Install
+let _pwaPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  _pwaPrompt=e;
+  updatePwaInstallUI();
+});
+window.addEventListener('appinstalled',()=>{
+  _pwaPrompt=null;
+  document.getElementById('pwaInstallDone').classList.remove('hidden');
+  ['pwaInstallAndroid','pwaInstallIOS','pwaInstallDesktop'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+});
+function updatePwaInstallUI(){
+  const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroid=/Android/i.test(navigator.userAgent);
+  const isMob=isIOS||isAndroid;
+  const isStandalone=window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone;
+  if(isStandalone){document.getElementById('pwaInstallDone').classList.remove('hidden');return;}
+  if(isIOS){document.getElementById('pwaInstallIOS').classList.remove('hidden');}
+  else if(_pwaPrompt){document.getElementById(isMob?'pwaInstallAndroid':'pwaInstallDesktop').classList.remove('hidden');}
+  else if(!isMob){document.getElementById('pwaInstallDesktop').classList.remove('hidden');}
+}
+function triggerPwaInstall(){
+  if(_pwaPrompt){_pwaPrompt.prompt();_pwaPrompt.userChoice.then(()=>{_pwaPrompt=null;});}
+}
+document.addEventListener('DOMContentLoaded',updatePwaInstallUI);
 async function requestNotifPermission(){
   if(Notification.permission==='default') await Notification.requestPermission();
   if('serviceWorker' in navigator){
