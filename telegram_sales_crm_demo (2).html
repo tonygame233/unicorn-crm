@@ -2755,7 +2755,10 @@ function confirmPaymentInfo(){
   renderAll();
   renderReports();
 }
-function togglePanel(){panelOpen=!panelOpen;$('inboxShell').style.gridTemplateColumns=panelOpen?'318px minmax(0,1fr) 360px':'318px minmax(0,1fr) 0px';renderPanel()}
+function togglePanel(){
+  if(isMobile()){closeMobCustomerPanel();return;}
+  panelOpen=!panelOpen;$('inboxShell').style.gridTemplateColumns=panelOpen?'318px minmax(0,1fr) 360px':'318px minmax(0,1fr) 0px';renderPanel();
+}
 
 // Render album nhiều ảnh
 function chatAlbumBubble(msgs, time, side, meta){
