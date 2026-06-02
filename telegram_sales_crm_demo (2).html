@@ -24,8 +24,8 @@
   #mobileBottomNav{display:none}
   @media(max-width:768px){
     html,body{overflow:hidden;height:100%}
-    /* App root: full height minus bottom nav */
-    #appRoot{display:flex!important;flex-direction:column!important;grid-template-columns:unset!important;height:calc(100dvh - 56px)!important;overflow:hidden!important}
+    /* App root: full height minus bottom nav + safe area top */
+    #appRoot{display:flex!important;flex-direction:column!important;grid-template-columns:unset!important;height:calc(100dvh - 56px - env(safe-area-inset-top,0px))!important;overflow:hidden!important;margin-top:env(safe-area-inset-top,0px)!important}
     #appRoot>aside.glass{display:none!important}
     #mobileBottomNav{display:flex!important;position:fixed;bottom:0;left:0;right:0;height:56px;background:#0f1722;border-top:1px solid rgba(255,255,255,.08);align-items:stretch;z-index:200;padding-bottom:env(safe-area-inset-bottom,0px)}
     /* Inbox screen: fill parent height */
@@ -48,8 +48,8 @@
     #chatHeader{flex-shrink:0!important;height:64px!important;padding:0 12px!important}
     #chatBody{flex:1!important;min-height:0!important;overflow-y:auto!important;padding:10px 12px!important}
     #chatBody .max-w-6xl{max-width:100%!important}
-    /* Giảm khoảng cách giữa tin nhắn */
-    #chatBody .space-y-8>*+*{margin-top:10px!important}
+    /* Giảm khoảng cách giữa tin nhắn - dùng đúng selector của Tailwind space-y */
+    #chatBody .space-y-8>:not([hidden])~:not([hidden]){margin-top:10px!important}
     #chatBody .msg-wrap>div{max-width:85%!important}
     /* Incoming bubble sáng hơn để dễ đọc trên mobile */
     #chatBody .msg-wrap .rounded-\[20px\].rounded-bl-\[4px\]{background-color:#1e2f45!important;border-color:rgba(255,255,255,.15)!important}
