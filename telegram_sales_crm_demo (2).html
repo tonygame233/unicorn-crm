@@ -111,9 +111,12 @@
       </aside>
 
       <main class="h-full min-h-0 grid grid-rows-[72px_minmax(0,1fr)] overflow-hidden">
-        <header class="glass border-b line flex items-center overflow-hidden">
-  <div id="channelTabs" class="flex flex-1 h-full overflow-x-auto scrollbar min-w-0"></div>
-  <div class="shrink-0 px-3 flex items-center">
+        <header class="glass border-b line" style="display:flex;align-items:stretch;height:72px;overflow:hidden">
+  <div style="flex:1;min-width:0;overflow:hidden;position:relative">
+    <div id="channelTabs" class="scrollbar" style="display:flex;height:100%;overflow-x:auto;overflow-y:hidden"></div>
+    <div style="position:absolute;right:0;top:0;bottom:0;width:32px;background:linear-gradient(to right,transparent,#101923);pointer-events:none"></div>
+  </div>
+  <div style="flex-shrink:0;padding:0 12px;display:flex;align-items:center;border-left:1px solid rgba(255,255,255,.08)">
     <button onclick="toggleChannelManager()" class="group h-9 px-3 rounded-xl bg-white/10 border border-white/15 hover:bg-yellow-400 transition-all duration-150 flex items-center gap-2 shadow-md">
       <svg class="w-4 h-4 text-zinc-200 group-hover:text-black transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 20h9"/>
