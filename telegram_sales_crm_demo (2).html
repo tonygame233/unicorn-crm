@@ -1172,12 +1172,18 @@ function startPolling(){
       contacts.forEach(c=>{
         const lead=leads.find(l=>l.id===c.id);
         if(!lead){leads.unshift(contactToLead(c));refreshList=true}
-        else if(c.last_message&&lead.msg!==c.last_message){
-          const isNew=c.unread>(lead.unread||0)&&(activeLead?.id!==c.id||document.hidden);
-          lead.msg=c.last_message;lead.time=formatRelativeTime(c.last_message_time);
-          lead.unread=(activeLead?.id===c.id&&!document.hidden)?0:c.unread;
-          if(isNew)notifyNewMessage(lead.n,c.last_message,lead);
-          refreshList=true;
+        else{
+          // Sync stage/pkg từ server (quan trọng để đồng bộ sau khi save)
+          if(c.lifecycle&&lead.stage!==c.lifecycle){lead.stage=c.lifecycle;refreshList=true;}
+          if(c.package!==undefined&&lead.pkg!==(c.package||'')){lead.pkg=c.package||'';refreshList=true;}
+          if(c.sale&&lead.sale!==c.sale){lead.sale=c.sale;refreshList=true;}
+          if(c.last_message&&lead.msg!==c.last_message){
+            const isNew=c.unread>(lead.unread||0)&&(activeLead?.id!==c.id||document.hidden);
+            lead.msg=c.last_message;lead.time=formatRelativeTime(c.last_message_time);
+            lead.unread=(activeLead?.id===c.id&&!document.hidden)?0:c.unread;
+            if(isNew)notifyNewMessage(lead.n,c.last_message,lead);
+            refreshList=true;
+          }
         }
       });
       if(refreshList)renderList();
@@ -2898,18 +2904,33 @@ function triggerAutoWelcome(lead){
     $('chatBody').scrollTop=$('chatBody').scrollHeight;
   },900);
 }
-function changeStage(s){
+async function changeStage(s){
   if(!activeLead)return;
+  const prevStage=activeLead.stage;
   activeLead.stage=s;
   if(s==='Đã PAID'&&!activeLead.pkg){activeLead.pkg='Premium'}
-  api('PATCH','/conversations/'+activeLead.id,{lifecycle:s}).catch(()=>{});
   renderAll();updateBroadcastAudience();renderReports();
+  try{
+    await api('PATCH','/conversations/'+activeLead.id,{lifecycle:s});
+  }catch(e){
+    // Rollback nếu lưu thất bại
+    activeLead.stage=prevStage;
+    renderAll();
+    showToast('Lỗi lưu','Không thể lưu vòng đời: '+e.message);
+  }
 }
-function changePackage(p){
+async function changePackage(p){
   if(!activeLead)return;
+  const prevPkg=activeLead.pkg,prevStage=activeLead.stage;
   activeLead.pkg=p;activeLead.stage='Đã PAID';activeLead.payPlan=activeLead.payPlan||p;processedOpen=true;
-  api('PATCH','/conversations/'+activeLead.id,{lifecycle:'Đã PAID',package:p}).catch(()=>{});
   renderAll();updateBroadcastAudience();renderReports();
+  try{
+    await api('PATCH','/conversations/'+activeLead.id,{lifecycle:'Đã PAID',package:p});
+  }catch(e){
+    activeLead.pkg=prevPkg;activeLead.stage=prevStage;
+    renderAll();
+    showToast('Lỗi lưu','Không thể lưu gói: '+e.message);
+  }
 }
 function confirmPaymentInfo(){
   activeLead.stage='Đã PAID';
@@ -4609,7 +4630,7 @@ async function showTrackDetail(id,name){
       </div>`;
   }catch(e){content.innerHTML='<p class="text-red-300">Lỗi: '+esc(e.message)+'</p>';}
 }
-let broadcastTarget={channel:'all',lifecycle:'all',package:'Lifetime'};
+let broadcastTarget={channel:'all',lifecycle:'all',package:'Premium'};
 function renderBroadcastTargetControls(){
   const channelBox=$('broadcastChannelGroup');
   const lifeBox=$('broadcastLifecycleGroup');
