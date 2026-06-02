@@ -3929,12 +3929,13 @@ function toggleMobFilter(){
         <span style="flex:1;font-size:14px;font-weight:700;text-align:left">${label}</span>
         ${cnt?`<span style="font-size:12px;color:#a1a1aa">${cnt}</span>`:''}
       </button>`).join('');
-    // Render lifecycle
-    const stageData=[['all','🌐','Tất cả'],...lifecycleStages.map(s=>[s.name,s.icon||'●',s.name])];
-    $('mobFilterLifecycle').innerHTML=stageData.map(([key,ico,label])=>`
-      <button onclick="setStage('${key}');closeMobFilter()" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:none;cursor:pointer;background:${activeStage===key?'rgba(250,204,21,.12)':'rgba(255,255,255,.04)'};color:${activeStage===key?'#facc15':'#d4d4d8'}">
-        <span style="width:22px;text-align:center;font-size:14px">${ico}</span>
+    // Render lifecycle (stages là mảng string)
+    const allStages=[{key:'all',label:'Tất cả',icon:'🌐'},...stages.map(s=>({key:s,label:s,icon:isPkgStage(s)?'　':null}))];
+    $('mobFilterLifecycle').innerHTML=allStages.map(({key,label,icon})=>`
+      <button onclick="setStage('${key.replace(/'/g,"\\'")}');closeMobFilter()" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:none;cursor:pointer;background:${activeStage===key?'rgba(250,204,21,.12)':'rgba(255,255,255,.04)'};color:${activeStage===key?'#facc15':'#d4d4d8'}">
+        ${icon?`<span style="width:22px;text-align:center;font-size:14px">${icon}</span>`:'<span style="width:22px"></span>'}
         <span style="font-size:14px;font-weight:700;text-align:left">${label}</span>
+        <span style="margin-left:auto;font-size:12px;color:#71717a">${count(key)||''}</span>
       </button>`).join('');
     overlay.style.display='block';sheet.style.display='block';
     requestAnimationFrame(()=>sheet.style.transform='translateY(0)');
