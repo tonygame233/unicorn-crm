@@ -22,6 +22,7 @@
     #broadcastTitle::before,#broadcastBody::before{content:none!important;display:none!important}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,sans-serif;background:#081018;color:#e5e7eb}.line{border-color:rgba(255,255,255,.08)}.glass{background:linear-gradient(180deg,#101923,#0b1119)}.scrollbar::-webkit-scrollbar{width:6px;height:6px}.scrollbar::-webkit-scrollbar-thumb{background:#334155;border-radius:999px}.module-screen{display:none}.module-screen.active{display:block}.module-btn.active{background:#facc15;color:#111}.tab-active{background:rgba(250,204,21,.08);color:#facc15;border-bottom:3px solid #facc15}.life-active{background:rgba(255,255,255,.08);color:white}.row:hover{background:rgba(255,255,255,.05)}.badge{min-width:18px;height:18px;border-radius:6px;background:#facc15;color:#111;font-size:11px;font-weight:900;display:grid;place-items:center}.chat-bg{background:radial-gradient(circle at center,rgba(30,41,59,.52),#081018 70%)}.bubble{animation:pop .16s ease}.msg-actions{display:none}.reaction-bar{display:none}@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.drawer{transition:.2s ease}.drawer.hide{display:none}.qbox{position:absolute;left:12px;bottom:64px;width:360px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:#101923;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;z-index:50}.qbox.hidden{display:none}.message-menu{position:fixed;z-index:9999;width:240px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:#101923;box-shadow:0 24px 70px rgba(0,0,0,.55);overflow:hidden;padding:8px}.message-menu.hidden{display:none}.message-menu button{width:100%;height:40px;border-radius:12px;display:flex;align-items:center;gap:10px;padding:0 12px;font-size:13px;color:#d4d4d8}.message-menu button:hover{background:rgba(255,255,255,.07)}.translate-box{margin-top:8px;border-left:3px solid #facc15;background:rgba(250,204,21,.08);border-radius:12px;padding:8px 10px;font-size:12px;color:#fde68a}.typing-dot{width:6px;height:6px;border-radius:999px;background:#a1a1aa;animation:typingBounce 1s infinite}.typing-dot:nth-child(2){animation-delay:.15s}.typing-dot:nth-child(3){animation-delay:.3s}@keyframes typingBounce{0%,80%,100%{transform:translateY(0);opacity:.45}40%{transform:translateY(-4px);opacity:1}}.seen-check{font-size:11px;color:#38bdf8;margin-left:4px}.import-tab.active-tab{background:#facc15;color:#111}.import-pane{}.import-pane.hidden{display:none}
   /* ─── MOBILE ───────────────────────────────────────── */
   #mobileBottomNav{display:none}
+  .mob-only{display:none}
   @media(max-width:768px){
     html,body{overflow:hidden;height:100%}
     /* App root: trừ bottom nav (56px) + home indicator + top notch */
@@ -33,6 +34,7 @@
     #screenInbox{height:100%!important;overflow:hidden!important}
     #inboxOuter{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;grid-template-columns:unset!important}
     #inboxFolders{display:none!important}
+    .mob-only{display:grid!important}
     /* Channel tab header: compact trên mobile */
     #inboxOuter>main{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;overflow:hidden!important}
     #inboxOuter>main>header{height:44px!important;min-height:44px!important;flex-shrink:0!important}
@@ -198,7 +200,7 @@
           <aside id="inboxLeadList" class="border-r line bg-[#0c141d] flex flex-col min-w-0 min-h-0 overflow-hidden">
             <div class="h-[64px] border-b line px-3 flex items-center justify-between gap-2">
               <div id="searchWrap" class="hidden flex-1"><input id="searchInput" oninput="renderList()" placeholder="Tìm tên khách..." class="w-full h-8 rounded-lg bg-black/30 border line px-3 outline-none text-[12px] placeholder:text-zinc-600" /></div>
-              <div id="topActionBtns" class="flex gap-2 ml-auto"><button onclick="toggleSearch()" class="w-9 h-9 rounded-xl bg-white/10 border border-white/15 text-zinc-100 text-[16px] hover:bg-yellow-400/20 hover:text-yellow-300 hover:border-yellow-400/40 transition-all duration-150 grid place-items-center">⌕</button><button onclick="toggleUnreplied()" id="unrepliedBtn" class="h-9 px-3 rounded-xl bg-white/10 border border-white/15 text-[11px] font-black text-zinc-100 hover:bg-yellow-400/20 hover:text-yellow-300 hover:border-yellow-400/40 transition-all duration-150">Chưa phản hồi</button></div>
+              <div id="topActionBtns" class="flex gap-2 ml-auto"><button onclick="toggleSearch()" class="w-9 h-9 rounded-xl bg-white/10 border border-white/15 text-zinc-100 text-[16px] hover:bg-yellow-400/20 hover:text-yellow-300 hover:border-yellow-400/40 transition-all duration-150 grid place-items-center">⌕</button><button id="mobFilterBtn" onclick="toggleMobFilter()" class="mob-only w-9 h-9 rounded-xl bg-white/10 border border-white/15 text-zinc-100 text-[16px] hover:bg-yellow-400/20 transition-all duration-150 grid place-items-center" title="Bộ lọc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg></button><button onclick="toggleUnreplied()" id="unrepliedBtn" class="h-9 px-3 rounded-xl bg-white/10 border border-white/15 text-[11px] font-black text-zinc-100 hover:bg-yellow-400/20 hover:text-yellow-300 hover:border-yellow-400/40 transition-all duration-150">Chưa phản hồi</button></div>
             </div>
             <div id="conversationList" class="flex-1 min-h-0 overflow-y-auto scrollbar"></div>
             <div class="h-[54px] border-t line px-5 flex items-center justify-between text-sm text-zinc-400"><span id="pageCount">0</span><div class="flex gap-2"><button class="w-9 h-9 rounded-xl bg-white/10 border border-white/15 text-zinc-100 font-black hover:bg-white/20 hover:text-white transition-all duration-150">‹</button><button class="w-9 h-9 rounded-xl bg-white/10 border border-white/15 text-zinc-100 font-black hover:bg-white/20 hover:text-white transition-all duration-150">›</button></div></div>
@@ -772,6 +774,21 @@
 </section>
 
 <div id="toastBox" class="fixed right-5 bottom-5 z-[5000] flex flex-col gap-3 pointer-events-none items-end"></div>
+
+<!-- Mobile Filter Bottom Sheet -->
+<div id="mobFilterOverlay" onclick="closeMobFilter()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;backdrop-filter:blur(2px)"></div>
+<div id="mobFilterSheet" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:2001;background:#0f1722;border-radius:24px 24px 0 0;border-top:1px solid rgba(255,255,255,.1);max-height:80vh;overflow-y:auto;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);padding-bottom:env(safe-area-inset-bottom,0px)">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,.07)">
+    <span style="font-size:16px;font-weight:900;color:#fff">Bộ lọc</span>
+    <button onclick="closeMobFilter()" style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.08);border:none;color:#a1a1aa;font-size:18px;display:grid;place-items:center;cursor:pointer">✕</button>
+  </div>
+  <div style="padding:16px 20px">
+    <p style="font-size:11px;font-weight:900;color:#71717a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Hộp thư đến</p>
+    <div id="mobFilterFolders" style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px"></div>
+    <p style="font-size:11px;font-weight:900;color:#71717a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Vòng đời</p>
+    <div id="mobFilterLifecycle" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+</div>
 
 <nav id="mobileBottomNav" style="display:none">
   <button onclick="openModule('Inbox')" id="mobNavInbox" class="mob-nav-btn mob-active">
@@ -3894,6 +3911,40 @@ function useQuickReplyDirect(i){
 function isMobile(){return window.innerWidth<=768}
 function mobBackToList(){document.body.classList.remove('mob-chat')}
 function mobOpenChat(){if(isMobile())document.body.classList.add('mob-chat')}
+
+function toggleMobFilter(){
+  const overlay=$('mobFilterOverlay'),sheet=$('mobFilterSheet');
+  const isHidden=sheet.style.display==='none';
+  if(isHidden){
+    // Render folders
+    const myName=getCurrentUserName();
+    const inCh=l=>l.c===activeChannel;
+    const allC=leads.filter(inCh).length;
+    const mineC=leads.filter(l=>inCh(l)&&l.sale?.toLowerCase()===myName).length;
+    const unassignedC=leads.filter(l=>inCh(l)&&(!l.sale||l.sale==='Unassigned')).length;
+    const folderData=[['📥','Tất cả',allC,'all'],['🧑‍💼','Của tôi',mineC,'mine'],['☒','Chưa chỉ định',unassignedC,'unassigned']];
+    $('mobFilterFolders').innerHTML=folderData.map(([ico,label,cnt,key])=>`
+      <button onclick="openFolder('${key}');closeMobFilter()" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:none;cursor:pointer;background:${activeFolderFilter===key?'rgba(250,204,21,.12)':'rgba(255,255,255,.04)'};color:${activeFolderFilter===key?'#facc15':'#d4d4d8'}">
+        <span style="width:22px;text-align:center">${ico}</span>
+        <span style="flex:1;font-size:14px;font-weight:700;text-align:left">${label}</span>
+        ${cnt?`<span style="font-size:12px;color:#a1a1aa">${cnt}</span>`:''}
+      </button>`).join('');
+    // Render lifecycle
+    const stageData=[['all','🌐','Tất cả'],...lifecycleStages.map(s=>[s.name,s.icon||'●',s.name])];
+    $('mobFilterLifecycle').innerHTML=stageData.map(([key,ico,label])=>`
+      <button onclick="setStage('${key}');closeMobFilter()" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:none;cursor:pointer;background:${activeStage===key?'rgba(250,204,21,.12)':'rgba(255,255,255,.04)'};color:${activeStage===key?'#facc15':'#d4d4d8'}">
+        <span style="width:22px;text-align:center;font-size:14px">${ico}</span>
+        <span style="font-size:14px;font-weight:700;text-align:left">${label}</span>
+      </button>`).join('');
+    overlay.style.display='block';sheet.style.display='block';
+    requestAnimationFrame(()=>sheet.style.transform='translateY(0)');
+  }else{closeMobFilter();}
+}
+function closeMobFilter(){
+  const overlay=$('mobFilterOverlay'),sheet=$('mobFilterSheet');
+  sheet.style.transform='translateY(100%)';
+  setTimeout(()=>{overlay.style.display='none';sheet.style.display='none';},280);
+}
 
 function openModule(name){
   document.querySelectorAll('.module-screen').forEach(x=>x.classList.remove('active'));
