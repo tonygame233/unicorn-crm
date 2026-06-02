@@ -2,7 +2,14 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Unicorn CRM" />
+  <meta name="theme-color" content="#081018" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <title>Unicorn CRM App</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -36,6 +43,9 @@
     .mob-nav-btn.mob-active{color:#facc15}
     .mob-nav-btn span{font-size:10px;font-weight:700}
     #toastBox{bottom:calc(56px + 12px)!important;right:12px!important}
+    #mobileBottomNav{padding-bottom:env(safe-area-inset-bottom,0px)}
+    #appRoot{height:calc(100dvh - 56px - env(safe-area-inset-bottom,0px))!important}
+    #replyComposer{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important}
   }
   </style>
 </head>
@@ -1214,19 +1224,44 @@ function notifyNewMessage(title,msg,lead){
 }
 
 let _swReg=null;
+const VAPID_PUBLIC_KEY='C988aTyIa1MNBOnlkWUvQj9BgXldqDk7D7edWPiC7IHqB-JZ40rkvJxek3JhXqOel_yhMYDtPopI1WTtESFvJQ';
+
+function urlB64ToUint8(base64String){
+  const pad=(4-base64String.length%4)%4;
+  const b=atob((base64String+'='.repeat(pad)).replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from(b,c=>c.charCodeAt(0));
+}
+
+async function subscribePush(reg){
+  try{
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub){
+      sub=await reg.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:urlB64ToUint8(VAPID_PUBLIC_KEY)
+      });
+    }
+    await api('POST','/push/subscribe',{
+      endpoint:sub.endpoint,
+      keys:{p256dh:btoa(String.fromCharCode(...new Uint8Array(sub.getKey('p256dh')))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,''),
+            auth:btoa(String.fromCharCode(...new Uint8Array(sub.getKey('auth')))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}
+    });
+  }catch(e){console.warn('Push subscribe failed:',e.message);}
+}
+
 async function requestNotifPermission(){
   if(Notification.permission==='default') await Notification.requestPermission();
-  // Đăng ký Service Worker
   if('serviceWorker' in navigator){
     try{
       _swReg=await navigator.serviceWorker.register('/sw.js',{scope:'/'});
-      // Lắng nghe message từ SW khi click notification
       navigator.serviceWorker.addEventListener('message',e=>{
         if(e.data?.type==='OPEN_CHAT'){
           openModule('Inbox');
           selectLead(e.data.leadId);
         }
       });
+      // Đăng ký Web Push nếu đã được cấp quyền
+      if(Notification.permission==='granted') await subscribePush(_swReg);
     }catch(err){console.warn('SW register failed:',err);}
   }
 }

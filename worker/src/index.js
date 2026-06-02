@@ -32,6 +32,17 @@ function b64urlBytes(bytes) {
 const app = new Hono();
 app.use('*', cors({ origin: '*' }));
 
+// PWA icon (SVG served as image/svg+xml — works for notifications)
+const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192"><rect width="192" height="192" rx="42" fill="#facc15"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="106" fill="#111827">U</text></svg>`;
+app.get('/icon-192.png', (c) => new Response(ICON_SVG, { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public,max-age=86400' } }));
+app.get('/icon-512.png', (c) => new Response(ICON_SVG, { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public,max-age=86400' } }));
+app.get('/favicon.ico', (c) => new Response(ICON_SVG, { headers: { 'Content-Type': 'image/svg+xml' } }));
+app.get('/manifest.json', (c) => c.json({
+  name:'Unicorn CRM', short_name:'Unicorn', start_url:'/', display:'standalone',
+  background_color:'#081018', theme_color:'#facc15', orientation:'portrait-primary',
+  icons:[{src:'/icon-192.png',sizes:'192x192',type:'image/svg+xml',purpose:'any maskable'},{src:'/icon-512.png',sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]
+}));
+
 // Stub socket.io — trả về JS rỗng để tránh lỗi 404 HTML block trang
 app.get('/socket.io/socket.io.js', (c) =>
   new Response('/* socket.io stub — app uses polling instead */', {
@@ -44,18 +55,32 @@ app.get('/sw.js', (c) => new Response(`
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(clients.claim()));
 
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch {}
+  const title = data.title || 'Unicorn CRM';
+  const options = {
+    body: data.body || 'Tin nhắn mới',
+    icon: data.icon || '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: data.tag || 'unicorn-msg',
+    renotify: true,
+    data: { leadId: data.leadId || null },
+    vibrate: [200, 100, 200],
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const leadId = event.notification.data?.leadId || null;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      // Tìm tab CRM đang mở
       const crm = list.find(c => c.url.startsWith(self.location.origin));
       if (crm) {
         if (leadId) crm.postMessage({ type: 'OPEN_CHAT', leadId });
         return crm.focus();
       }
-      // Không có tab nào → mở mới
       return clients.openWindow(self.location.origin + (leadId ? '?chat=' + leadId : ''));
     })
   );
@@ -746,6 +771,99 @@ app.post('/import/messages', auth, async (c) => {
   return c.json({ imported });
 });
 
+// ─── WEB PUSH ─────────────────────────────────────────────────────────────────
+function b64urlDecodeBytes(str) {
+  const pad = (4 - str.length % 4) % 4;
+  return Uint8Array.from(atob(str.replace(/-/g,'+').replace(/_/g,'/')+('='.repeat(pad))), c=>c.charCodeAt(0));
+}
+
+async function vapidJwt(endpoint, env) {
+  const audience = new URL(endpoint).origin;
+  const now = Math.floor(Date.now()/1000);
+  const hdr = b64url(JSON.stringify({typ:'JWT',alg:'ES256'}));
+  const pay = b64url(JSON.stringify({aud:audience, exp:now+43200, sub:env.VAPID_SUBJECT}));
+  const sigInput = `${hdr}.${pay}`;
+  const key = await crypto.subtle.importKey('jwk',
+    {kty:'EC',crv:'P-256',d:env.VAPID_PRIVATE_D,x:env.VAPID_X,y:env.VAPID_Y,key_ops:['sign']},
+    {name:'ECDSA',namedCurve:'P-256'}, false, ['sign']);
+  const sig = await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'}, key, new TextEncoder().encode(sigInput));
+  return `${sigInput}.${b64urlBytes(new Uint8Array(sig))}`;
+}
+
+async function ecePushEncrypt(plaintext, p256dhB64, authB64) {
+  const recipPub = b64urlDecodeBytes(p256dhB64);
+  const authSecret = b64urlDecodeBytes(authB64);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  const ephKP = await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'}, true, ['deriveBits']);
+  const ephPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', ephKP.publicKey));
+
+  const recipKey = await crypto.subtle.importKey('raw', recipPub, {name:'ECDH',namedCurve:'P-256'}, false, []);
+  const sharedBits = await crypto.subtle.deriveBits({name:'ECDH',public:recipKey}, ephKP.privateKey, 256);
+
+  const enc = new TextEncoder();
+  const ikmInfo = new Uint8Array([...enc.encode('WebPush: info\x00'), ...recipPub, ...ephPubRaw]);
+  const hkdfBase = await crypto.subtle.importKey('raw', sharedBits, 'HKDF', false, ['deriveBits']);
+  const ikmBits = await crypto.subtle.deriveBits({name:'HKDF',hash:'SHA-256',salt:authSecret,info:ikmInfo}, hkdfBase, 256);
+
+  const ikmKey = await crypto.subtle.importKey('raw', ikmBits, 'HKDF', false, ['deriveBits']);
+  const cekBits = await crypto.subtle.deriveBits({name:'HKDF',hash:'SHA-256',salt,info:enc.encode('Content-Encoding: aes128gcm\x00')}, ikmKey, 128);
+  const nonceBits = await crypto.subtle.deriveBits({name:'HKDF',hash:'SHA-256',salt,info:enc.encode('Content-Encoding: nonce\x00')}, ikmKey, 96);
+
+  const cek = await crypto.subtle.importKey('raw', cekBits, 'AES-GCM', false, ['encrypt']);
+  const data = enc.encode(plaintext);
+  const padded = new Uint8Array(data.length + 1);
+  padded.set(data); padded[data.length] = 2;
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:nonceBits}, cek, padded));
+
+  const result = new Uint8Array(16 + 4 + 1 + 65 + ciphertext.length);
+  const dv = new DataView(result.buffer);
+  result.set(salt, 0);
+  dv.setUint32(16, 4096, false);
+  result[20] = 65;
+  result.set(ephPubRaw, 21);
+  result.set(ciphertext, 86);
+  return result;
+}
+
+async function sendWebPush(sub, payload, env) {
+  try {
+    const jwt = await vapidJwt(sub.endpoint, env);
+    const body = await ecePushEncrypt(JSON.stringify(payload), sub.p256dh, sub.auth);
+    const res = await fetch(sub.endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `vapid t=${jwt},k=${env.VAPID_PUBLIC_KEY}`,
+        'Content-Type': 'application/octet-stream',
+        'Content-Encoding': 'aes128gcm',
+        TTL: '86400',
+        Urgency: 'high',
+      },
+      body,
+    });
+    return res.status;
+  } catch (e) {
+    console.error('push error:', e.message);
+    return 0;
+  }
+}
+
+// Push subscribe / unsubscribe
+app.post('/push/subscribe', async (c) => {
+  const { endpoint, keys } = await c.req.json();
+  if (!endpoint || !keys?.p256dh || !keys?.auth) return c.json({ error: 'invalid' }, 400);
+  await c.env.DB.prepare(
+    'INSERT INTO push_subscriptions (endpoint,p256dh,auth) VALUES (?,?,?) ON CONFLICT(endpoint) DO UPDATE SET p256dh=excluded.p256dh, auth=excluded.auth'
+  ).bind(endpoint, keys.p256dh, keys.auth).run();
+  return c.json({ ok: true });
+});
+
+app.post('/push/unsubscribe', async (c) => {
+  const { endpoint } = await c.req.json();
+  if (endpoint) await c.env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').bind(endpoint).run();
+  return c.json({ ok: true });
+});
+
 // ─── TELEGRAM WEBHOOK ─────────────────────────────────────────────────────────
 app.post('/telegram/webhook/:token', async (c) => {
   const token = c.req.param('token');
@@ -826,6 +944,28 @@ app.post('/telegram/webhook/:token', async (c) => {
       });
     }
   }
+
+  // Gửi Web Push đến tất cả subscribers (fire & forget)
+  const contactName = [from.first_name, from.last_name].filter(Boolean).join(' ') || from.username || 'Khách';
+  const pushPayload = {
+    title: contactName,
+    body: msgText.length > 80 ? msgText.slice(0,77)+'...' : msgText,
+    leadId: contact.id,
+    icon: '/icon-192.png',
+    tag: 'msg-' + contact.id,
+  };
+  c.executionCtx.waitUntil((async () => {
+    try {
+      const subs = await c.env.DB.prepare('SELECT * FROM push_subscriptions').all();
+      const sends = (subs.results || []).map(sub => sendWebPush(sub, pushPayload, c.env));
+      const results = await Promise.all(sends);
+      // Clean up expired subscriptions (410 = Gone)
+      const expired = (subs.results || []).filter((_, i) => results[i] === 410);
+      for (const sub of expired) {
+        await c.env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').bind(sub.endpoint).run();
+      }
+    } catch(e) { console.error('push batch error:', e.message); }
+  })());
 
   return c.json({ ok: true });
 });
