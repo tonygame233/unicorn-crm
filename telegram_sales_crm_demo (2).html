@@ -48,7 +48,10 @@
     #inboxChat{position:absolute!important;inset:0!important;z-index:3!important;transform:translateX(100%)!important;transition:transform .25s ease!important;will-change:transform;display:flex!important;flex-direction:column!important;overflow:hidden!important}
     body.mob-chat #inboxLeadList{transform:translateX(-100%)!important}
     body.mob-chat #inboxChat{transform:translateX(0)!important}
-    #customerPanel{display:none!important}
+    /* Customer panel: right drawer on mobile */
+    #customerPanel{display:block!important;position:fixed!important;top:0!important;right:0!important;bottom:0!important;width:88vw!important;max-width:360px!important;z-index:1500!important;transform:translateX(100%)!important;transition:transform .28s cubic-bezier(.4,0,.2,1)!important;border-left:1px solid rgba(255,255,255,.1)!important;padding-top:env(safe-area-inset-top,0px)!important}
+    #customerPanel.mob-panel-open{transform:translateX(0)!important}
+    #mobCpOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1499;backdrop-filter:blur(2px)}
     #mobBackBtn{display:flex!important}
     /* Chat layout trong #inboxChat (flex column) */
     #chatHeader{flex-shrink:0!important;height:64px!important;padding:0 12px!important}
@@ -774,6 +777,9 @@
 </section>
 
 <div id="toastBox" class="fixed right-5 bottom-5 z-[5000] flex flex-col gap-3 pointer-events-none items-end"></div>
+
+<!-- Mobile Customer Panel Overlay -->
+<div id="mobCpOverlay" onclick="closeMobCustomerPanel()"></div>
 
 <!-- Mobile Filter Bottom Sheet -->
 <div id="mobFilterOverlay" onclick="closeMobFilter()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;backdrop-filter:blur(2px)"></div>
@@ -2538,7 +2544,7 @@ function renderChat(){
   }
   const c=channels.find(x=>x.id===activeLead.c);
   const _online=isOnline(activeLead);
-  $('chatHeader').innerHTML=`<div class="flex items-center gap-2 min-w-0"><button id="mobBackBtn" onclick="mobBackToList()" style="display:none" class="w-10 h-10 rounded-xl bg-white/10 border border-white/15 text-zinc-200 grid place-items-center shrink-0 mr-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>${avt(activeLead.id,activeLead.n,'w-10 h-10','text-sm')}<div class="min-w-0"><h2 class="text-base font-black text-white truncate">${activeLead.n}</h2><p id="presenceLabel" class="text-sm ${_online?'text-green-400':'text-zinc-500'}">${activeLead.typing?'đang nhập...':(_online?'🟢 Online':getOfflineText())}</p></div></div><div class="flex items-center gap-2 shrink-0"><button onclick="openTelegramPreview()" class="mob-hide h-10 px-3 rounded-xl bg-white/10 border border-white/15 hover:bg-white/20 text-zinc-200 font-black text-sm flex items-center gap-2 shadow-md transition-all duration-150" title="Xuất ảnh feedback"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Xuất ảnh</span></button><button onclick="togglePanel()" class="mob-hide h-10 px-4 rounded-xl bg-white/10 border border-white/15 hover:bg-yellow-400/20 hover:border-yellow-400/40 text-zinc-100 hover:text-yellow-300 font-black text-sm flex items-center gap-2 shadow-md transition-all duration-150"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" class="text-yellow-300 shrink-0"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01"></path><path d="M11 12h1v4h1"></path></svg><span>Thông tin khách</span></button></div>`;
+  $('chatHeader').innerHTML=`<div class="flex items-center gap-2 min-w-0"><button id="mobBackBtn" onclick="mobBackToList()" style="display:none" class="w-10 h-10 rounded-xl bg-white/10 border border-white/15 text-zinc-200 grid place-items-center shrink-0 mr-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>${avt(activeLead.id,activeLead.n,'w-10 h-10','text-sm')}<div class="min-w-0"><h2 class="text-base font-black text-white truncate">${activeLead.n}</h2><p id="presenceLabel" class="text-sm ${_online?'text-green-400':'text-zinc-500'}">${activeLead.typing?'đang nhập...':(_online?'🟢 Online':getOfflineText())}</p></div></div><div class="flex items-center gap-2 shrink-0"><button onclick="openTelegramPreview()" class="mob-hide h-10 px-3 rounded-xl bg-white/10 border border-white/15 hover:bg-white/20 text-zinc-200 font-black text-sm flex items-center gap-2 shadow-md transition-all duration-150" title="Xuất ảnh feedback"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Xuất ảnh</span></button><button onclick="togglePanel()" class="mob-hide h-10 px-4 rounded-xl bg-white/10 border border-white/15 hover:bg-yellow-400/20 hover:border-yellow-400/40 text-zinc-100 hover:text-yellow-300 font-black text-sm flex items-center gap-2 shadow-md transition-all duration-150"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" class="text-yellow-300 shrink-0"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01"></path><path d="M11 12h1v4h1"></path></svg><span>Thông tin khách</span></button><button onclick="openMobCustomerPanel()" class="mob-only w-10 h-10 rounded-xl bg-white/10 border border-white/15 text-zinc-200 grid place-items-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v4h1"/></svg></button></div>`;
   if(activeLead.messages){
     const msgs=activeLead.messages;
     // Gộp ảnh có cùng media_group_id thành album
@@ -3909,8 +3915,19 @@ function useQuickReplyDirect(i){
   if(chatInput)chatInput.focus();
 }
 function isMobile(){return window.innerWidth<=768}
-function mobBackToList(){document.body.classList.remove('mob-chat')}
+function mobBackToList(){document.body.classList.remove('mob-chat');closeMobCustomerPanel()}
 function mobOpenChat(){if(isMobile())document.body.classList.add('mob-chat')}
+
+function openMobCustomerPanel(){
+  if(!isMobile())return;
+  const overlay=$('mobCpOverlay');
+  overlay.style.display='block';
+  $('customerPanel').classList.add('mob-panel-open');
+}
+function closeMobCustomerPanel(){
+  $('customerPanel').classList.remove('mob-panel-open');
+  $('mobCpOverlay').style.display='none';
+}
 
 function toggleMobFilter(){
   const overlay=$('mobFilterOverlay'),sheet=$('mobFilterSheet');
