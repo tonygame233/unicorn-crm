@@ -1158,7 +1158,13 @@ function connectSocket(){
 }
 function startPolling(){
   if(pollingTimer)return;
-  pollingTimer=setInterval(async()=>{
+  const POLL_ACTIVE=2000,POLL_BG=6000;
+  let lastPoll=0;
+  async function doPoll(){
+    const now=Date.now();
+    const interval=document.hidden?POLL_BG:POLL_ACTIVE;
+    if(now-lastPoll<interval)return;
+    lastPoll=now;
     if(!activeChannel)return;
     try{
       const contacts=await api('GET','/conversations?channel_id='+activeChannel);
@@ -1180,7 +1186,9 @@ function startPolling(){
         if(msgs.length>activeLead.messages.length){activeLead.messages=msgs.reverse();renderChat()}
       }
     }catch(e){}
-  },5000);
+  }
+  pollingTimer=setInterval(doPoll,500);
+  doPoll();
 }
 function stopPolling(){if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null}}
 function getNotificationSettings(){
