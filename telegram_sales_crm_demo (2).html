@@ -851,11 +851,17 @@ async function loadInitialData(){
     channels=chs.map(c=>({id:c.id,name:c.name,icon:c.icon||'🤖',bot:'@'+(c.bot_username||''),bots:c.bots||[]}));
     quickReplies=qrs.map(q=>({...q,key:q.key_cmd,files:q.files||[]}));
     if(channels.length>0){
-      activeChannel=channels[0].id;
-      activeStage='all';
-      activeFolderFilter='all';
+      const saved=loadUIState();
+      // Khôi phục channel đã lưu, fallback về channel đầu tiên
+      const savedCh=channels.find(c=>c.id===saved.ch);
+      activeChannel=(savedCh||channels[0]).id;
+      activeStage='all';activeFolderFilter='all';
       await loadConversations(activeChannel);
-      // Auto-load messages cho lead đầu tiên
+      // Khôi phục chat đang mở
+      if(saved.lead){
+        const savedLead=leads.find(l=>l.id===saved.lead);
+        if(savedLead)activeLead=savedLead;
+      }
       if(activeLead){
         try{
           const msgs=await api('GET','/conversations/'+activeLead.id+'/messages');
@@ -2381,6 +2387,7 @@ function renderPanel(){
 }
 async function setChannel(id){
   activeChannel=id;activeStage='all';activeFolderFilter='all';
+  saveUIState();
   await loadConversations(id);
   activeLead=filtered()[0]||leads.find(l=>l.c===id)||null;
   if(activeLead){
@@ -2393,11 +2400,18 @@ async function setChannel(id){
 }
 function setStage(s){activeStage=s;activeFolderFilter='all';if(isPkgStage(s))processedOpen=true;activeLead=filtered()[0]||activeLead;renderAll()}
 function toggleProcessed(){processedOpen=!processedOpen;renderLifecycle()}
+function saveUIState(){
+  try{localStorage.setItem('crm_ui_state',JSON.stringify({ch:activeChannel,lead:activeLead?.id||null}))}catch{}
+}
+function loadUIState(){
+  try{return JSON.parse(localStorage.getItem('crm_ui_state')||'{}')}catch{return{}}
+}
 async function selectLead(id){
   activeLead=leads.find(l=>l.id===id)||activeLead;
   if(!activeLead)return;
   activeLead.messages=null;
   activeLead.unread=0;
+  saveUIState();
   renderAll();
   renderList();
   renderTabs();
