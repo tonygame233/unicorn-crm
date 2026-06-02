@@ -1129,29 +1129,40 @@ function notifyNewMessage(title,msg,lead){
   const leadId=lead?.id||null;
   if(s.toast)showToast(title,msg,leadId);
   if(s.sound)playTone(s.soundType,s.volume);
-  // Browser native notification
+  // Browser native notification — dùng SW để click focus tab cũ
   if(s.badge&&Notification.permission==='granted'&&document.hidden){
-    const n=new Notification('Unicorn CRM — '+title,{
-      body:msg,
-      icon:'/favicon.ico',
-      tag:'crm_msg_'+(leadId||''),
-      requireInteraction:false,
-    });
-    if(leadId){
-      n.onclick=()=>{
-        window.focus();
-        selectLead(leadId);
-        openModule('Inbox');
-        n.close();
-      };
+    if(_swReg){
+      _swReg.showNotification('Unicorn CRM — '+title,{
+        body:msg,
+        icon:'/favicon.ico',
+        tag:'crm_msg_'+(leadId||''),
+        data:{leadId},
+        requireInteraction:false,
+      });
+    } else {
+      // Fallback nếu SW chưa sẵn sàng
+      const n=new Notification('Unicorn CRM — '+title,{body:msg,tag:'crm_msg_'+(leadId||'')});
+      n.onclick=()=>{window.focus();if(leadId){openModule('Inbox');selectLead(leadId);}n.close();};
+      setTimeout(()=>n.close(),6000);
     }
-    setTimeout(()=>n.close(),6000);
   }
 }
 
-function requestNotifPermission(){
-  if(Notification.permission==='default'){
-    Notification.requestPermission();
+let _swReg=null;
+async function requestNotifPermission(){
+  if(Notification.permission==='default') await Notification.requestPermission();
+  // Đăng ký Service Worker
+  if('serviceWorker' in navigator){
+    try{
+      _swReg=await navigator.serviceWorker.register('/sw.js',{scope:'/'});
+      // Lắng nghe message từ SW khi click notification
+      navigator.serviceWorker.addEventListener('message',e=>{
+        if(e.data?.type==='OPEN_CHAT'){
+          openModule('Inbox');
+          selectLead(e.data.leadId);
+        }
+      });
+    }catch(err){console.warn('SW register failed:',err);}
   }
 }
 

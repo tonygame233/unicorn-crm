@@ -39,6 +39,29 @@ app.get('/socket.io/socket.io.js', (c) =>
   })
 );
 
+// Service Worker — handle notification click để focus tab cũ thay vì mở tab mới
+app.get('/sw.js', (c) => new Response(`
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const leadId = event.notification.data?.leadId || null;
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      // Tìm tab CRM đang mở
+      const crm = list.find(c => c.url.startsWith(self.location.origin));
+      if (crm) {
+        if (leadId) crm.postMessage({ type: 'OPEN_CHAT', leadId });
+        return crm.focus();
+      }
+      // Không có tab nào → mở mới
+      return clients.openWindow(self.location.origin + (leadId ? '?chat=' + leadId : ''));
+    })
+  );
+});
+`, { headers: { 'Content-Type': 'application/javascript', 'Service-Worker-Allowed': '/' } }));
+
 // ─── PASSWORD (Web Crypto PBKDF2) ─────────────────────────────────────────────
 async function hashPwd(pwd) {
   const enc = new TextEncoder();
