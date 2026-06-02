@@ -16,8 +16,8 @@ database_id = "7b9fde0f-e77f-45ac-ac7a-ac2d28e9f091"
 # Environment variables (đổi JWT_SECRET trước khi deploy)
 [vars]
 JWT_SECRET = "unicorn_crm_change_this_secret_before_deploy"
-VAPID_PUBLIC_KEY = "C988aTyIa1MNBOnlkWUvQj9BgXldqDk7D7edWPiC7IHqB-JZ40rkvJxek3JhXqOel_yhMYDtPopI1WTtESFvJQ"
-VAPID_PRIVATE_D  = "4OgEa8WAZQ7oYhpLoeI91LoDeNGHSzGym9An6LBmCCk"
-VAPID_X          = "3zxpPIhrUw0E6eWRZS9CP0GBeV2oOTsPt51Y-ILsgeo"
-VAPID_Y          = "B-JZ40rkvJxek3JhXqOel_yhMYDtPopI1WTtESFvJQ"
+VAPID_PUBLIC_KEY = "BEk53x6-AwryZFu9OP7WCdeXCEyFsdHJ5WCnJhxmodLwi_o63N8AttV5KfxCNUjwRO5GC6ay6mn-kEXsfCAW1Zo"
+VAPID_PRIVATE_D  = "dvu4SRayr3EPnoew6RM-ociZ2j7mdgJCo76SGK9Aov0"
+VAPID_X          = "STnfHr4DCvJkW704_tYJ15cITIWx0cnlYKcmHGah0vA"
+VAPID_Y          = "i_o63N8AttV5KfxCNUjwRO5GC6ay6mn-kEXsfCAW1Zo"
 VAPID_SUBJECT    = "mailto:phuchuuhuynh203@gmail.com"

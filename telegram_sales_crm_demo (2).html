@@ -590,6 +590,19 @@
           </div>
         </div>
 
+      <!-- Push notification setup -->
+      <div class="mt-5 rounded-2xl border border-yellow-400/30 bg-yellow-400/5 p-5">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-2xl">📲</span>
+          <div>
+            <p class="font-black text-white">Thông báo điện thoại (khi đóng app)</p>
+            <p class="text-xs text-zinc-400 mt-0.5">Cần cài app lên màn hình chính trước</p>
+          </div>
+        </div>
+        <button onclick="resubscribePush()" class="w-full h-11 rounded-2xl bg-yellow-400 text-black font-black text-sm">Bật / Cài lại thông báo điện thoại</button>
+        <p class="text-xs text-zinc-500 mt-2">iOS: Phải dùng Safari + cài app về màn hình chính + iOS 16.4+</p>
+      </div>
+
       <div class="mt-5 grid grid-cols-3 gap-3">
         <label class="rounded-2xl border line bg-[#0f1722] p-4 flex items-center justify-between cursor-pointer">
           <div>
@@ -1484,7 +1497,7 @@ function notifyNewMessage(title,msg,lead){
 }
 
 let _swReg=null;
-const VAPID_PUBLIC_KEY='C988aTyIa1MNBOnlkWUvQj9BgXldqDk7D7edWPiC7IHqB-JZ40rkvJxek3JhXqOel_yhMYDtPopI1WTtESFvJQ';
+const VAPID_PUBLIC_KEY='BEk53x6-AwryZFu9OP7WCdeXCEyFsdHJ5WCnJhxmodLwi_o63N8AttV5KfxCNUjwRO5GC6ay6mn-kEXsfCAW1Zo';
 
 function urlB64ToUint8(base64String){
   const pad=(4-base64String.length%4)%4;
@@ -1556,6 +1569,23 @@ function testNotificationSound(){
   saveNotificationSettings();
   const fakeLead=activeLead||leads[0]||null;
   notifyNewMessage('Test thông báo','Khách mới vừa nhắn vào Telegram',fakeLead);
+}
+async function resubscribePush(){
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+      alert('Trình duyệt không hỗ trợ Push. Cần dùng Safari (iOS 16.4+) hoặc Chrome/Android sau khi cài app.');return;
+    }
+    const perm = await Notification.requestPermission();
+    if(perm!=='granted'){alert('Cần cho phép thông báo để nhận push.');return;}
+    const reg = await navigator.serviceWorker.ready;
+    // Hủy subscription cũ
+    const oldSub = await reg.pushManager.getSubscription();
+    if(oldSub){await oldSub.unsubscribe();await api('POST','/push/unsubscribe',{endpoint:oldSub.endpoint});}
+    // Đăng ký mới
+    const sub = await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(VAPID_PUBLIC_KEY)});
+    await api('POST','/push/subscribe',{endpoint:sub.endpoint,keys:{p256dh:btoa(String.fromCharCode(...new Uint8Array(sub.getKey('p256dh')))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,''),auth:btoa(String.fromCharCode(...new Uint8Array(sub.getKey('auth')))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'')}});
+    alert('✅ Đã đăng ký push thành công! Giờ bạn sẽ nhận thông báo kể cả khi đóng app.');
+  }catch(e){alert('Lỗi: '+e.message);}
 }
 
 // ── TELEGRAM IPHONE PREVIEW ──────────────────────────────────────────────────
