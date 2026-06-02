@@ -634,7 +634,7 @@
   </div>
 </section>
 
-<div id="toastBox" class="fixed right-6 bottom-6 z-[5000] space-y-3 pointer-events-none"></div>
+<div id="toastBox" class="fixed right-5 bottom-5 z-[5000] flex flex-col gap-3 pointer-events-none items-end"></div>
 <div id="messageContextMenu" class="message-menu hidden"></div>
 
 <div id="channelManager" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[4000] p-6 flex items-center justify-center">
@@ -1099,28 +1099,46 @@ function showToast(title,msg,leadId){
   if(!box)return;
   const id='toast_'+Date.now();
   const clickable=!!leadId;
-  const avatarColors=['#E67E22','#E74C3C','#9B59B6','#2980B9','#27AE60','#16A085','#F39C12'];
+  const avatarColors=['#E67E22','#E74C3C','#9B59B6','#2980B9','#27AE60','#16A085','#F39C12','#8E44AD'];
   const ac=leadId?avatarColors[leadId%avatarColors.length]:'#facc15';
-  const letter=title?title[0].toUpperCase():'U';
-  const cursor=clickable?'cursor:pointer':'';
-  const hover=clickable?'onmouseenter="this.style.background=\'#1a2740\'" onmouseleave="this.style.background=\'#0f1722\'"':'';
-  const onclick=clickable?`onclick="selectLead(${leadId});openModule('Inbox');document.getElementById('${id}').remove()"`:'' ;
+  const letter=(title?title[0]:'U').toUpperCase();
+  const time=new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
+  const clickAttr=clickable?`onclick="selectLead(${leadId});openModule('Inbox');document.getElementById('${id}').remove()"` :'';
   box.insertAdjacentHTML('beforeend',`
-    <div id="${id}" class="pointer-events-auto w-[340px] rounded-2xl border line bg-[#0f1722] shadow-2xl shadow-black/60 overflow-hidden bubble transition-all" style="${cursor}" ${onclick} ${hover}>
-      <div class="flex items-center gap-3 px-4 py-3">
-        <div style="width:42px;height:42px;border-radius:14px;background:${ac};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;flex-shrink:0;">${letter}</div>
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center justify-between gap-2">
-            <p class="font-black text-white text-sm truncate">${esc(title)}</p>
-            <span class="text-[10px] text-zinc-600 shrink-0">${new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}</span>
+    <div id="${id}" class="pointer-events-auto bubble"
+      style="width:360px;background:rgba(15,20,35,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+             border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;
+             box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04);
+             ${clickable?'cursor:pointer;':''}"
+      ${clickAttr}
+      onmouseenter="this.style.background='rgba(20,30,55,0.96)'"
+      onmouseleave="this.style.background='rgba(15,20,35,0.92)'">
+      ${clickable?`<div style="height:3px;background:linear-gradient(90deg,${ac},${ac}88,transparent);"></div>`:''}
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:${ac};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff;flex-shrink:0;box-shadow:0 4px 12px ${ac}55;">${letter}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;">
+            <span style="color:#fff;font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;">${esc(title)}</span>
+            <span style="color:rgba(255,255,255,0.3);font-size:11px;flex-shrink:0;">${time}</span>
           </div>
-          <p class="text-sm text-zinc-400 mt-0.5 truncate">${esc(msg)}</p>
-          ${clickable?'<p class="text-[11px] text-yellow-400/70 mt-1 font-bold">Bấm để mở chat →</p>':''}
+          <p style="color:rgba(255,255,255,0.55);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;">${esc(msg)}</p>
         </div>
+        <button onclick="event.stopPropagation();document.getElementById('${id}').remove()"
+          style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.4);font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;"
+          onmouseenter="this.style.background='rgba(255,255,255,0.15)'"
+          onmouseleave="this.style.background='rgba(255,255,255,0.08)'">✕</button>
       </div>
-      ${clickable?'<div style="height:2px;background:linear-gradient(90deg,#facc15,#f97316,transparent)"></div>':''}
+      ${clickable?`<div style="padding:0 16px 12px;"><span style="font-size:11px;color:${ac};font-weight:700;opacity:0.8;">Bấm để xem tin nhắn →</span></div>`:''}
     </div>`);
-  setTimeout(()=>{const el=$(id);if(el)el.remove()},5000);
+  // Auto dismiss với animation
+  const el=document.getElementById(id);
+  setTimeout(()=>{
+    if(!el||!el.parentNode)return;
+    el.style.transition='opacity 0.3s,transform 0.3s';
+    el.style.opacity='0';
+    el.style.transform='translateX(20px)';
+    setTimeout(()=>el.remove(),300);
+  },5000);
 }
 
 function notifyNewMessage(title,msg,lead){
