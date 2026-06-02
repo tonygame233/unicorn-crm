@@ -1076,6 +1076,7 @@ async function loadInitialData(){
     }
     renderAll();renderReports();loadNotificationSettings();initBroadcastInteractions();
     connectSocket();requestNotifPermission();
+    syncSettingsFromServer();
   }catch(e){
     console.error('Lỗi tải dữ liệu:',e);
     showToast('Lỗi kết nối','Không thể kết nối server: '+e.message);
@@ -1172,6 +1173,48 @@ function stopPolling(){if(pollingTimer){clearInterval(pollingTimer);pollingTimer
 function getNotificationSettings(){
   try{return JSON.parse(localStorage.getItem(NOTIF_KEY))||{enabled:true,toast:true,sound:true,badge:true,volume:70,soundType:'telegram'}}catch(e){return {enabled:true,toast:true,sound:true,badge:true,volume:70,soundType:'telegram'}}
 }
+async function syncSettingsFromServer(){
+  try{
+    const res=await api('GET','/settings');
+    if(!res)return;
+    // Notification settings
+    const keys=['notif_enabled','notif_toast','notif_sound','notif_badge','notif_volume','notif_sound_type'];
+    const notifKeys={notif_enabled:'enabled',notif_toast:'toast',notif_sound:'sound',notif_badge:'badge',notif_volume:'volume',notif_sound_type:'soundType'};
+    const local=getNotificationSettings();
+    let changed=false;
+    for(const k of keys){
+      if(res[k]!==undefined){
+        const lk=notifKeys[k];
+        if(k==='notif_volume')local[lk]=Number(res[k]);
+        else if(k==='notif_enabled'||k==='notif_toast'||k==='notif_sound'||k==='notif_badge')local[lk]=res[k]==='true';
+        else local[lk]=res[k];
+        changed=true;
+      }
+    }
+    if(changed)localStorage.setItem(NOTIF_KEY,JSON.stringify(local));
+    // Custom sound
+    if(res['custom_sound']){
+      localStorage.setItem(CUSTOM_SOUND_KEY,res['custom_sound']);
+      if(res['custom_sound_name'])localStorage.setItem(CUSTOM_SOUND_KEY+'_name',res['custom_sound_name']);
+    }
+    loadNotificationSettings();
+  }catch(e){}
+}
+async function pushSettingsToServer(extraData={}){
+  try{
+    const s=getNotificationSettings();
+    const data={
+      notif_enabled:String(s.enabled),
+      notif_toast:String(s.toast),
+      notif_sound:String(s.sound),
+      notif_badge:String(s.badge),
+      notif_volume:String(s.volume),
+      notif_sound_type:s.soundType,
+      ...extraData
+    };
+    await api('POST','/settings',data);
+  }catch(e){}
+}
 function saveNotificationSettings(){
   const data={
     enabled:$('notifEnabled').checked,
@@ -1182,6 +1225,7 @@ function saveNotificationSettings(){
     soundType:$('notifSound').value||'telegram'
   };
   localStorage.setItem(NOTIF_KEY,JSON.stringify(data));
+  pushSettingsToServer();
 }
 function loadNotificationSettings(){
   const s=getNotificationSettings();
@@ -1292,8 +1336,11 @@ function handleCustomSound(e){
     localStorage.setItem(CUSTOM_SOUND_KEY,ev.target.result);
     localStorage.setItem(CUSTOM_SOUND_KEY+'_name',file.name);
     updateCustomSoundUI();
-    // Tự động chọn custom sound
     if($('notifSound')){$('notifSound').value='custom';saveNotificationSettings();}
+    // Sync lên server nếu ≤ 500KB (base64)
+    if(ev.target.result.length<=700000){
+      pushSettingsToServer({custom_sound:ev.target.result,custom_sound_name:file.name});
+    }
   };
   reader.readAsDataURL(file);
 }

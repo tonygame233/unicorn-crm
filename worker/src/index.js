@@ -848,6 +848,41 @@ async function sendWebPush(sub, payload, env) {
   }
 }
 
+// ─── USER SETTINGS (sync across devices) ─────────────────────────────────────
+app.get('/settings', auth, async (c) => {
+  const user = c.get('user');
+  await c.env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_settings (
+    user_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT,
+    PRIMARY KEY(user_id, key)
+  )`).run();
+  const rows = await c.env.DB.prepare(
+    'SELECT key, value FROM user_settings WHERE user_id = ?'
+  ).bind(user.id).all();
+  const result = {};
+  for (const r of rows.results) result[r.key] = r.value;
+  return c.json(result);
+});
+
+app.post('/settings', auth, async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json();
+  await c.env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_settings (
+    user_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT,
+    PRIMARY KEY(user_id, key)
+  )`).run();
+  const stmts = Object.entries(body).map(([key, value]) =>
+    c.env.DB.prepare(
+      'INSERT OR REPLACE INTO user_settings (user_id, key, value) VALUES (?, ?, ?)'
+    ).bind(user.id, key, value == null ? null : String(value))
+  );
+  if (stmts.length) await c.env.DB.batch(stmts);
+  return c.json({ ok: true });
+});
+
 // Push subscribe / unsubscribe
 app.post('/push/subscribe', async (c) => {
   const { endpoint, keys } = await c.req.json();
