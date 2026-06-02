@@ -864,7 +864,7 @@ async function loadInitialData(){
       }
     }
     renderAll();renderReports();loadNotificationSettings();initBroadcastInteractions();
-    connectSocket();
+    connectSocket();requestNotifPermission();
   }catch(e){
     console.error('Lỗi tải dữ liệu:',e);
     showToast('Lỗi kết nối','Không thể kết nối server: '+e.message);
@@ -925,7 +925,7 @@ function connectSocket(){
     renderTabs();
     if(message.direction==='in'){
       const n=lead?.n||'Khách hàng';
-      notifyNewMessage(n,message.text||'');
+      notifyNewMessage(n,message.text||'',lead);
       // ── Kích hoạt automation rules
       if(lead)checkAutomationRules(lead,message,isNewLead);
     }
@@ -945,7 +945,7 @@ function startPolling(){
           const isNew=c.unread>(lead.unread||0)&&activeLead?.id!==c.id;
           lead.msg=c.last_message;lead.time=formatRelativeTime(c.last_message_time);
           lead.unread=activeLead?.id===c.id?0:c.unread;
-          if(isNew)notifyNewMessage(lead.n,c.last_message);
+          if(isNew)notifyNewMessage(lead.n,c.last_message,lead);
           refreshList=true;
         }
       });
@@ -1088,22 +1088,71 @@ function playTone(type='telegram',volume=70){
   });
   setTimeout(()=>ctx.close(),700);
 }
-function showToast(title,msg){
+function showToast(title,msg,leadId){
   const box=$('toastBox');
   if(!box)return;
   const id='toast_'+Date.now();
-  box.insertAdjacentHTML('beforeend','<div id="'+id+'" class="pointer-events-auto w-[320px] rounded-2xl border line bg-[#0f1722] shadow-2xl shadow-black/50 p-4 bubble"><div class="flex items-start gap-3"><div class="w-10 h-10 rounded-xl bg-yellow-400 text-black grid place-items-center font-black">U</div><div class="min-w-0"><p class="font-black text-white">'+esc(title)+'</p><p class="text-sm text-zinc-400 mt-1 truncate">'+esc(msg)+'</p></div></div></div>');
-  setTimeout(()=>{const el=$(id);if(el&&el.remove)el.remove()},3500);
+  const clickable=!!leadId;
+  const avatarColors=['#E67E22','#E74C3C','#9B59B6','#2980B9','#27AE60','#16A085','#F39C12'];
+  const ac=leadId?avatarColors[leadId%avatarColors.length]:'#facc15';
+  const letter=title?title[0].toUpperCase():'U';
+  const cursor=clickable?'cursor:pointer':'';
+  const hover=clickable?'onmouseenter="this.style.background=\'#1a2740\'" onmouseleave="this.style.background=\'#0f1722\'"':'';
+  const onclick=clickable?`onclick="selectLead(${leadId});openModule('Inbox');document.getElementById('${id}').remove()"`:'' ;
+  box.insertAdjacentHTML('beforeend',`
+    <div id="${id}" class="pointer-events-auto w-[340px] rounded-2xl border line bg-[#0f1722] shadow-2xl shadow-black/60 overflow-hidden bubble transition-all" style="${cursor}" ${onclick} ${hover}>
+      <div class="flex items-center gap-3 px-4 py-3">
+        <div style="width:42px;height:42px;border-radius:14px;background:${ac};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;flex-shrink:0;">${letter}</div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center justify-between gap-2">
+            <p class="font-black text-white text-sm truncate">${esc(title)}</p>
+            <span class="text-[10px] text-zinc-600 shrink-0">${new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}</span>
+          </div>
+          <p class="text-sm text-zinc-400 mt-0.5 truncate">${esc(msg)}</p>
+          ${clickable?'<p class="text-[11px] text-yellow-400/70 mt-1 font-bold">Bấm để mở chat →</p>':''}
+        </div>
+      </div>
+      ${clickable?'<div style="height:2px;background:linear-gradient(90deg,#facc15,#f97316,transparent)"></div>':''}
+    </div>`);
+  setTimeout(()=>{const el=$(id);if(el)el.remove()},5000);
 }
-function notifyNewMessage(title,msg){
+
+function notifyNewMessage(title,msg,lead){
   const s=getNotificationSettings();
   if(!s.enabled)return;
-  if(s.toast)showToast(title,msg);
+  const leadId=lead?.id||null;
+  if(s.toast)showToast(title,msg,leadId);
   if(s.sound)playTone(s.soundType,s.volume);
+  // Browser native notification
+  if(s.badge&&Notification.permission==='granted'&&document.hidden){
+    const n=new Notification('Unicorn CRM — '+title,{
+      body:msg,
+      icon:'/favicon.ico',
+      tag:'crm_msg_'+(leadId||''),
+      requireInteraction:false,
+    });
+    if(leadId){
+      n.onclick=()=>{
+        window.focus();
+        selectLead(leadId);
+        openModule('Inbox');
+        n.close();
+      };
+    }
+    setTimeout(()=>n.close(),6000);
+  }
 }
+
+function requestNotifPermission(){
+  if(Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+}
+
 function testNotificationSound(){
   saveNotificationSettings();
-  notifyNewMessage('Test thông báo','Khách mới vừa nhắn vào Telegram');
+  const fakeLead=activeLead||leads[0]||null;
+  notifyNewMessage('Test thông báo','Khách mới vừa nhắn vào Telegram',fakeLead);
 }
 
 // ── TELEGRAM IPHONE PREVIEW ──────────────────────────────────────────────────
