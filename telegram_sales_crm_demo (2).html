@@ -47,12 +47,13 @@
     #mobBackBtn{display:flex!important}
     /* Chat layout trong #inboxChat (flex column) */
     #chatHeader{flex-shrink:0!important;height:64px!important;padding:0 12px!important}
-    #chatBody{flex:1!important;min-height:0!important;overflow-y:auto!important;padding:10px 12px!important}
-    #chatBody .max-w-6xl{max-width:100%!important}
-    /* Giảm khoảng cách giữa tin nhắn - dùng đúng selector của Tailwind space-y */
+    #chatBody{flex:1!important;min-height:0!important;overflow-y:auto!important;padding:10px 12px!important;display:flex!important;flex-direction:column!important}
+    /* Đẩy tin nhắn xuống cuối như Telegram */
+    #chatBody .max-w-6xl{max-width:100%!important;width:100%!important;margin-top:auto!important}
+    /* Giảm khoảng cách giữa tin nhắn */
     #chatBody .space-y-8>:not([hidden])~:not([hidden]){margin-top:10px!important}
     #chatBody .msg-wrap>div{max-width:85%!important}
-    /* Incoming bubble sáng hơn để dễ đọc trên mobile */
+    /* Incoming bubble sáng hơn */
     #chatBody .msg-wrap .rounded-\[20px\].rounded-bl-\[4px\]{background-color:#1e2f45!important;border-color:rgba(255,255,255,.15)!important}
     #replyComposer{flex-shrink:0!important;padding:8px 12px 10px!important}
     #replyComposer .max-w-5xl{max-width:100%!important}
