@@ -1,0 +1,11 @@
+node_modules/
+backend/node_modules/
+worker/node_modules/
+backend/crm.db
+backend/*.db-shm
+backend/*.db-wal
+backend/.env
+worker/migrate_data.sql
+worker/public/
+.wrangler/
+*.log

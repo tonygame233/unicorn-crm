@@ -1,0 +1,17 @@
+{
+  "name": "unicorn-crm-worker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute unicorn-crm-db --file=schema.sql",
+    "db:init:remote": "wrangler d1 execute unicorn-crm-db --remote --file=schema.sql"
+  },
+  "dependencies": {
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

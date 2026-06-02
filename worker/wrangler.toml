@@ -1,0 +1,18 @@
+name = "unicorn-crm"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Static assets (HTML frontend)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# D1 SQLite database
+[[d1_databases]]
+binding = "DB"
+database_name = "unicorn-crm-db"
+database_id = "7b9fde0f-e77f-45ac-ac7a-ac2d28e9f091"
+
+# Environment variables (đổi JWT_SECRET trước khi deploy)
+[vars]
+JWT_SECRET = "unicorn_crm_change_this_secret_before_deploy"
