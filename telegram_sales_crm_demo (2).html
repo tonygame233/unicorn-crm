@@ -43,6 +43,13 @@
     .mob-nav-btn.mob-active{color:#facc15}
     .mob-nav-btn span{font-size:10px;font-weight:700}
     #toastBox{bottom:calc(56px + 12px)!important;right:12px!important}
+    /* Broadcast mobile */
+    #screenBroadcast .h-full.grid{grid-template-columns:1fr!important}
+    #screenBroadcast aside.glass.border-r{display:none!important}
+    #broadcastPreviewPanel{display:none!important}
+    #screenBroadcast main{min-width:0}
+    /* Reports/Automation/Contacts mobile scroll */
+    #screenReports,#screenAutomation,#screenContacts,#screenTracking,#screenSettings{overflow-y:auto!important}
     #mobileBottomNav{padding-bottom:env(safe-area-inset-bottom,0px)}
     #appRoot{height:calc(100dvh - 56px - env(safe-area-inset-bottom,0px))!important}
     #replyComposer{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important}
