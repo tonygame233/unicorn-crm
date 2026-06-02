@@ -235,7 +235,7 @@ app.get('/conversations', auth, async (c) => {
 
 app.get('/conversations/:id/messages', auth, async (c) => {
   const { results } = await c.env.DB.prepare(
-    'SELECT * FROM messages WHERE contact_id = ? ORDER BY created_at ASC LIMIT 300'
+    'SELECT * FROM messages WHERE contact_id = ? ORDER BY created_at DESC LIMIT 100'
   ).bind(c.req.param('id')).all();
   return c.json(results);
 });

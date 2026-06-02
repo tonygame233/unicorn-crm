@@ -859,7 +859,7 @@ async function loadInitialData(){
       if(activeLead){
         try{
           const msgs=await api('GET','/conversations/'+activeLead.id+'/messages');
-          activeLead.messages=msgs;
+          activeLead.messages=msgs.reverse();
         }catch(e){}
       }
     }
@@ -952,7 +952,7 @@ function startPolling(){
       if(refreshList)renderList();
       if(activeLead?.messages){
         const msgs=await api('GET','/conversations/'+activeLead.id+'/messages');
-        if(msgs.length>activeLead.messages.length){activeLead.messages=msgs;renderChat()}
+        if(msgs.length>activeLead.messages.length){activeLead.messages=msgs.reverse();renderChat()}
       }
     }catch(e){}
   },5000);
@@ -2386,7 +2386,7 @@ async function setChannel(id){
   if(activeLead){
     try{
       const msgs=await api('GET','/conversations/'+activeLead.id+'/messages');
-      activeLead.messages=msgs;
+      activeLead.messages=msgs.reverse();
     }catch(e){}
   }
   renderAll();
@@ -2404,7 +2404,7 @@ async function selectLead(id){
   api('POST','/conversations/'+id+'/read').catch(()=>{});
   try{
     const msgs=await api('GET','/conversations/'+id+'/messages');
-    activeLead.messages=msgs;
+    activeLead.messages=msgs.reverse();
     renderChat();
   }catch(e){console.error('Lỗi tải messages:',e)}
 }
@@ -2503,19 +2503,21 @@ function chatAlbumBubble(msgs, time, side, meta){
 
 // Trả về HTML content cho bubble — xử lý ảnh nếu có file_id
 function msgContent(m){
-  if(m.file_id&&(m.media_type==='photo'||m.media_type==='sticker')){
+  const mtype=m.media_type||m.type||'';
+  if(m.file_id&&(mtype==='photo'||mtype==='sticker')){
     const src='/media/'+(m.channel_id||activeLead?.c)+'/'+m.file_id;
-    let html='<img src="'+src+'" loading="lazy" onerror="this.style.display=\'none\'" style="display:block;max-width:220px;max-height:280px;border-radius:12px;object-fit:cover;cursor:pointer;" onclick="window.open(this.src,\'_blank\')" />';
+    const isSticker=mtype==='sticker';
+    let html=`<img src="${src}" loading="lazy" onerror="this.style.display='none'" style="display:block;${isSticker?'max-width:160px;max-height:160px;':'max-width:220px;max-height:280px;border-radius:12px;object-fit:cover;'}cursor:pointer;" onclick="window.open(this.src,'_blank')" />`;
     if(m.text&&m.text!=='[photo]'&&m.text!=='[sticker]')html+='<span style="display:block;margin-top:5px;">'+esc(m.text)+'</span>';
     return html;
   }
-  if(m.media_type==='document'){
+  if(mtype==='document'){
     const name=m.text?.replace(/^\[file:/,'').replace(/\]$/,'')||'document';
     return '📎 <b>'+esc(name)+'</b>';
   }
-  if(m.media_type==='video')return '🎥 Video';
-  if(m.media_type==='voice')return '🎙 Voice message';
-  if(m.media_type==='gif')return '🎞 GIF';
+  if(mtype==='video')return '🎥 Video';
+  if(mtype==='voice')return '🎙 Voice message';
+  if(mtype==='gif'||mtype==='animation')return '🎞 GIF';
   return esc(m.text||'');
 }
 
