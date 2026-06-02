@@ -946,9 +946,16 @@ async function checkLoginSession(){
 }
 function logoutUser(){stopPolling();if(socket){socket.disconnect();socket=null}localStorage.removeItem(LOGIN_KEY);showLogin()}
 
+// Parse UTC timestamp từ DB (không có Z) → thêm Z để browser tự convert sang local (UTC+7)
+function toVNDate(ts){
+  if(!ts)return new Date();
+  const s=String(ts);
+  const hasZone=s.endsWith('Z')||s.includes('+')||/[+-]\d{2}:\d{2}$/.test(s);
+  return new Date(hasZone?s:s.replace(' ','T')+'Z');
+}
 function formatMsgTime(ts){
   if(!ts)return'';
-  const d=new Date(ts);
+  const d=toVNDate(ts);
   const h=d.getHours()%12||12;
   const m=String(d.getMinutes()).padStart(2,'0');
   const ampm=d.getHours()>=12?'PM':'AM';
@@ -956,7 +963,7 @@ function formatMsgTime(ts){
 }
 function formatRelativeTime(ts){
   if(!ts)return'';
-  const d=new Date(ts);
+  const d=toVNDate(ts);
   const now=new Date();
   const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const yestStart=new Date(todayStart-86400000);
@@ -1494,7 +1501,7 @@ function buildIphoneTelegram(msgs,contactName,status,theme,model,timeStr){
   for(let i=0;i<msgs.length;i++){
     const m=msgs[i];
     const isOut=m.direction==='out';
-    const d=m.created_at?new Date(m.created_at):new Date();
+    const d=m.created_at?toVNDate(m.created_at):new Date();
     const ds=d.toLocaleDateString('en-US',{month:'long',day:'numeric'});
     if(ds!==lastDate){
       msgsHtml+=`<div style="display:flex;justify-content:center;margin:10px 0;"><span style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);color:rgba(255,255,255,0.78);font-size:12.5px;padding:4px 14px;border-radius:14px;font-weight:400;font-family:-apple-system,sans-serif;letter-spacing:0.1px;">${ds}</span></div>`;
@@ -1675,7 +1682,7 @@ function buildTgCanvas(msgs,contactName,statusText,theme){
   for(let i=0;i<valid.length;i++){
     const m=valid[i];
     const isR=m.direction==='in'; // customer=right
-    const d=m.created_at?new Date(m.created_at):new Date();
+    const d=m.created_at?toVNDate(m.created_at):new Date();
     const ds=d.toLocaleDateString('en-US',{month:'long',day:'numeric'});
     if(ds!==lastDate){
       items.push({k:'date',label:ds,gap:lastDate?GD*2:0});
