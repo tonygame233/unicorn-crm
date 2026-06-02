@@ -565,14 +565,15 @@
 
         <div class="rounded-2xl border line bg-[#0f1722] p-5">
           <p class="text-sm font-black text-white mb-4">Mẫu chuông</p>
-          <select id="notifSound" onchange="saveNotificationSettings()" class="w-full h-11 rounded-2xl bg-black/30 border line px-4 outline-none text-sm">
+          <div class="flex gap-2">
+          <select id="notifSound" onchange="saveNotificationSettings()" class="flex-1 h-11 rounded-2xl bg-black/30 border line px-4 outline-none text-sm">
             <option value="telegram">Telegram Ding</option>
             <option value="soft">Soft Pop</option>
             <option value="alert">Alert Beep</option>
             <option value="coin">Coin Ping</option>
           </select>
-          <button onclick="testNotificationSound()" class="mt-3 w-full h-10 rounded-xl bg-yellow-400 text-black font-black text-sm">Test chuông</button>
-        </div>
+          <button onclick="testNotificationSound()" class="h-11 px-3 rounded-2xl bg-yellow-400 text-black font-black text-sm shrink-0">▶</button>
+          </div>
       </div>
 
       <div class="mt-5 grid grid-cols-3 gap-3">
@@ -1266,23 +1267,40 @@ function startRealtimeDemo(){
     },1800);
   },2200);
 }
+// Singleton AudioContext — unlock sớm để iOS không block
+let _audioCtx=null;
+function getAudioCtx(){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return null;
+  if(!_audioCtx)_audioCtx=new AC();
+  if(_audioCtx.state==='suspended')_audioCtx.resume();
+  return _audioCtx;
+}
+// Unlock trên iOS khi user chạm màn hình lần đầu
+document.addEventListener('touchstart',()=>getAudioCtx(),{once:true,passive:true});
+document.addEventListener('click',()=>getAudioCtx(),{once:true,passive:true});
+
 function playTone(type='telegram',volume=70){
-  const AudioCtx=window.AudioContext||window.webkitAudioContext;
-  if(!AudioCtx)return;
-  const ctx=new AudioCtx();
+  const ctx=getAudioCtx();
+  if(!ctx)return;
   const gain=ctx.createGain();
   gain.gain.value=(volume/100)*0.18;
   gain.connect(ctx.destination);
-  const patterns={telegram:[[880,0,.08],[1320,.09,.08]],soft:[[660,0,.08],[880,.1,.08]],alert:[[520,0,.12],[520,.16,.12]],coin:[[1040,0,.06],[1560,.08,.08]]};
-  (patterns[type]||patterns.telegram).forEach(p=>{
+  const patterns={
+    telegram:[[880,0,.08],[1320,.09,.08]],
+    soft:[[660,0,.1],[880,.12,.1]],
+    alert:[[520,0,.12],[520,.18,.12],[780,.35,.1]],
+    coin:[[1040,0,.06],[1560,.08,.08],[2080,.17,.06]]
+  };
+  const now=ctx.currentTime;
+  (patterns[type]||patterns.telegram).forEach(([freq,delay,dur])=>{
     const osc=ctx.createOscillator();
     osc.type='sine';
-    osc.frequency.value=p[0];
+    osc.frequency.value=freq;
     osc.connect(gain);
-    osc.start(ctx.currentTime+p[1]);
-    osc.stop(ctx.currentTime+p[1]+p[2]);
+    osc.start(now+delay);
+    osc.stop(now+delay+dur);
   });
-  setTimeout(()=>ctx.close(),700);
 }
 function showToast(title,msg,leadId){
   const box=$('toastBox');
