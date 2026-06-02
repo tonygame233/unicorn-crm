@@ -33,9 +33,12 @@
     #screenInbox{height:100%!important;overflow:hidden!important}
     #inboxOuter{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;grid-template-columns:unset!important}
     #inboxFolders{display:none!important}
-    /* Channel tab header: ẩn trên mobile */
+    /* Channel tab header: compact trên mobile */
     #inboxOuter>main{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;overflow:hidden!important}
-    #inboxOuter>main>header{display:none!important}
+    #inboxOuter>main>header{height:44px!important;min-height:44px!important;flex-shrink:0!important}
+    #channelTabs button{height:44px!important;padding:0 14px!important;font-size:12px!important;gap:6px!important}
+    #channelTabs button span.text-2xl{font-size:16px!important}
+    #inboxOuter>main>header>div:last-child{display:none!important}
     /* InboxShell: relative container cho slide */
     #inboxShell{flex:1!important;min-height:0!important;position:relative!important;overflow:hidden!important;display:block!important}
     /* Lead list & chat: absolute fill */
