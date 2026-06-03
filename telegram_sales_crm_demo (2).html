@@ -1090,6 +1090,7 @@ async function loadInitialData(){
     renderAll();renderReports();loadNotificationSettings();initBroadcastInteractions();
     connectSocket();requestNotifPermission();
     syncSettingsFromServer();
+    loadCustomStages();
   }catch(e){
     console.error('Lỗi tải dữ liệu:',e);
     showToast('Lỗi kết nối','Không thể kết nối server: '+e.message);
@@ -4228,7 +4229,43 @@ function openFolder(type){
 function toggleSearch(){searchOpen=!searchOpen;const wrap=$('searchWrap');if(wrap){wrap.classList.toggle('hidden',!searchOpen);if(searchOpen)setTimeout(()=>$('searchInput')&&$('searchInput').focus(),50)}}
 function toggleUnreplied(){onlyUnreplied=!onlyUnreplied;const btn=$('unrepliedBtn');if(btn){btn.className=onlyUnreplied?'h-8 px-2.5 rounded-lg bg-yellow-400 text-black text-[11px] font-black':'h-8 px-2.5 rounded-lg bg-black/30 border line text-[11px] font-black text-zinc-300'}renderList()}
 function toggleLifecycleManage(){lifecycleManageOpen=!lifecycleManageOpen;const box=$('lifecycleManage');if(box)box.classList.toggle('hidden',!lifecycleManageOpen)}
-function addLifecycleStage(){const input=$('newStageInput');const name=(input?input.value:'').trim();if(!name||stages.includes(name))return;const idx=stages.indexOf('Đã PAID');stages.splice(idx>0?idx:stages.length,0,name);input.value='';renderAll()}
+const DEFAULT_STAGES=['New Lead','Tiềm năng','PENDING PAYM...','Đã PAID','RENEW','Không tiềm năng','Khách phá','Đã chặn bot'];
+function getCustomStages(){try{return JSON.parse(localStorage.getItem('crm_custom_stages')||'[]')}catch{return[]}}
+function saveCustomStages(){
+  const custom=stages.filter(s=>!DEFAULT_STAGES.includes(s)&&!s.startsWith('└'));
+  localStorage.setItem('crm_custom_stages',JSON.stringify(custom));
+  api('POST','/settings',{custom_stages:JSON.stringify(custom)}).catch(()=>{});
+}
+async function loadCustomStages(){
+  // Load từ server trước, fallback về localStorage
+  try{
+    const res=await api('GET','/settings');
+    if(res?.custom_stages){
+      const serverStages=JSON.parse(res.custom_stages);
+      localStorage.setItem('crm_custom_stages',JSON.stringify(serverStages));
+      applyCustomStages(serverStages);return;
+    }
+  }catch{}
+  applyCustomStages(getCustomStages());
+}
+function applyCustomStages(custom){
+  if(!custom||!custom.length)return;
+  const idx=stages.indexOf('RENEW');
+  custom.forEach(name=>{
+    if(!stages.includes(name))stages.splice(idx>0?idx:stages.length-4,0,name);
+  });
+  renderAll();
+}
+function addLifecycleStage(){
+  const input=$('newStageInput');
+  const name=(input?input.value:'').trim();
+  if(!name||stages.includes(name))return;
+  const idx=stages.indexOf('RENEW');
+  stages.splice(idx>0?idx:stages.length,0,name);
+  input.value='';
+  saveCustomStages();
+  renderAll();
+}
 const AUTO_KEY='unicorn_automation_v2';
 const TRIGGER_LABELS={new_lead:'Khách mới vào bot',keyword_price:'Từ khóa: giá',keyword_pay:'Từ khóa: thanh toán',keyword_vip:'Từ khóa: VIP',keyword_custom:'Từ khóa tự nhập',any_message:'Mọi tin nhắn'};
 const ACTION_LABELS={send_welcome:'Gửi /hello',send_price:'Gửi /price',send_payment:'Gửi /pay',send_quick_reply:'Gửi quick reply',send_custom:'Gửi tin tùy soạn',remind_sale:'Nhắc sale',move_lead:'Chuyển → Tiềm năng',change_lifecycle:'Đổi lifecycle'};
