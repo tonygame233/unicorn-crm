@@ -63,8 +63,12 @@
     #chatBody .msg-wrap>div{max-width:85%!important}
     /* Incoming bubble sáng hơn */
     #chatBody .msg-wrap .rounded-\[20px\].rounded-bl-\[4px\]{background-color:#1e2f45!important;border-color:rgba(255,255,255,.15)!important}
-    #replyComposer{flex-shrink:0!important;padding:8px 12px 10px!important}
+    #replyComposer{flex-shrink:0!important;padding:8px 12px 6px!important}
     #replyComposer .max-w-5xl{max-width:100%!important}
+    /* Ẩn bottom nav khi bàn phím mở */
+    body.kb-open #mobileBottomNav{display:none!important}
+    body.kb-open #appRoot{height:var(--kb-app-height,100dvh)!important;margin-top:0!important}
+    body.kb-open #inboxChat{padding-bottom:0!important}
     .qbox{width:calc(100vw - 24px)!important;left:0!important;max-height:220px!important}
     .mob-hide{display:none!important}
     .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;color:#71717a;transition:color .15s}
@@ -4107,6 +4111,34 @@ function useQuickReplyDirect(i){
 }
 function isMobile(){return window.innerWidth<=768}
 function mobBackToList(){document.body.classList.remove('mob-chat');closeMobCustomerPanel()}
+
+// ── Keyboard resize handling (iOS visualViewport) ──────────────────────────
+(function(){
+  if(!window.visualViewport||!isMobile())return;
+  const safeTop=()=>parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sat')||'0')||0;
+  let rafId=null;
+  function onViewportChange(){
+    cancelAnimationFrame(rafId);
+    rafId=requestAnimationFrame(()=>{
+      if(!isMobile())return;
+      const vv=window.visualViewport;
+      const fullH=window.screen.height;
+      const kbH=Math.max(0,fullH-vv.height-vv.offsetTop);
+      const isKbOpen=kbH>100;
+      document.body.classList.toggle('kb-open',isKbOpen);
+      if(isKbOpen){
+        // Tinggi app = tinggi viewport - offset top
+        const appH=vv.height-vv.offsetTop;
+        document.documentElement.style.setProperty('--kb-app-height',appH+'px');
+        // Scroll chat ke cuối
+        const cb=$('chatBody');
+        if(cb)setTimeout(()=>{cb.scrollTop=cb.scrollHeight},80);
+      }
+    });
+  }
+  window.visualViewport.addEventListener('resize',onViewportChange,{passive:true});
+  window.visualViewport.addEventListener('scroll',onViewportChange,{passive:true});
+})();
 function mobOpenChat(){if(isMobile())document.body.classList.add('mob-chat')}
 
 function openMobCustomerPanel(){
